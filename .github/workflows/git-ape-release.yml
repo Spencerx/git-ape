@@ -296,19 +296,40 @@ jobs:
           gh release upload "$TAG" "$VSIX_FILE" --clobber
 
       - name: Publish to VS Code Marketplace
-        if: steps.ver.outputs.prerelease == 'false'
         working-directory: extension
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
           set -euo pipefail
           if [[ -z "${VSCE_PAT:-}" ]]; then
             echo "VSCE_PAT secret not set; skipping marketplace publish."
             exit 0
           fi
+
+          # VS Code Marketplace rejects semver pre-release suffixes
+          # (e.g. 0.1.0-rc.1). The official channel model uses odd minors
+          # for the Pre-Release channel and even minors for Release.
+          # See: https://code.visualstudio.com/api/working-with-extensions/publishing-extension#prerelease-extensions
+          if [[ "$VERSION" == *-* ]]; then
+            echo "Version $VERSION carries a semver pre-release suffix, which the"
+            echo "VS Code Marketplace does not accept. Skipping marketplace publish."
+            exit 0
+          fi
+
+          MINOR=$(echo "$VERSION" | cut -d. -f2)
+          if (( MINOR % 2 == 1 )); then
+            FLAG="--pre-release"
+            CHANNEL="Pre-Release"
+          else
+            FLAG=""
+            CHANNEL="Release"
+          fi
+
           VSIX_FILE=$(ls ./*.vsix)
-          echo "Publishing $VSIX_FILE to VS Code Marketplace"
-          vsce publish --packagePath "$VSIX_FILE" --no-dependencies
+          echo "Publishing $VSIX_FILE to VS Code Marketplace ($CHANNEL channel)"
+          # shellcheck disable=SC2086
+          vsce publish --packagePath "$VSIX_FILE" --no-dependencies $FLAG
 
       - name: Update CHANGELOG.md on main
         if: steps.ver.outputs.prerelease == 'false'
