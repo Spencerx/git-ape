@@ -309,7 +309,6 @@ jobs:
           VSIX_FILE=$(ls ./*.vsix)
           echo "Publishing $VSIX_FILE to VS Code Marketplace"
           vsce publish --packagePath "$VSIX_FILE" --no-dependencies
-          gh release upload "$TAG" "$VSIX_FILE" --clobber
 
       - name: Update CHANGELOG.md on main
         if: steps.ver.outputs.prerelease == 'false'
