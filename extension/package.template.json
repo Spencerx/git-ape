@@ -11,6 +11,10 @@
     "url": "https://github.com/Azure/git-ape"
   },
   "homepage": "https://github.com/Azure/git-ape",
+  "extensionKind": [
+    "workspace",
+    "ui"
+  ],
   "categories": [
     "Chat"
   ],
@@ -29,137 +33,74 @@
     "chat"
   ],
   "engines": {
-    "vscode": "^1.99.0"
+    "vscode": "^1.106.1"
   },
   "contributes": {
     "chatAgents": [
       {
-        "id": "git-ape",
-        "name": "git-ape",
-        "description": "Intelligent Azure deployment agent system for GitHub Copilot. Provides guided, safe, and validated Azure resource deployments using ARM templates.",
-        "instructions": ".github/agents/git-ape.agent.md"
+        "path": "./.github/agents/git-ape.agent.md"
       },
       {
-        "id": "azure-iac-exporter",
-        "name": "azure-iac-exporter",
-        "description": "Export existing Azure resources to ARM templates by analyzing live Azure state.",
-        "instructions": ".github/agents/azure-iac-exporter.agent.md"
+        "path": "./.github/agents/azure-iac-exporter.agent.md"
       },
       {
-        "id": "azure-policy-advisor",
-        "name": "azure-policy-advisor",
-        "description": "Assess Azure Policy compliance for ARM template resources.",
-        "instructions": ".github/agents/azure-policy-advisor.agent.md"
+        "path": "./.github/agents/azure-policy-advisor.agent.md"
       },
       {
-        "id": "azure-principal-architect",
-        "name": "azure-principal-architect",
-        "description": "Provide expert Azure architecture guidance using the Well-Architected Framework.",
-        "instructions": ".github/agents/azure-principal-architect.agent.md"
+        "path": "./.github/agents/azure-principal-architect.agent.md"
       },
       {
-        "id": "azure-requirements-gatherer",
-        "name": "azure-requirements-gatherer",
-        "description": "Gather Azure deployment requirements through guided questions.",
-        "instructions": ".github/agents/azure-requirements-gatherer.agent.md"
+        "path": "./.github/agents/azure-requirements-gatherer.agent.md"
       },
       {
-        "id": "azure-resource-deployer",
-        "name": "azure-resource-deployer",
-        "description": "Execute ARM template deployments to Azure and monitor progress.",
-        "instructions": ".github/agents/azure-resource-deployer.agent.md"
+        "path": "./.github/agents/azure-resource-deployer.agent.md"
       },
       {
-        "id": "azure-template-generator",
-        "name": "azure-template-generator",
-        "description": "Generate ARM templates with security analysis and best practices.",
-        "instructions": ".github/agents/azure-template-generator.agent.md"
+        "path": "./.github/agents/azure-template-generator.agent.md"
       },
       {
-        "id": "git-ape-onboarding",
-        "name": "git-ape-onboarding",
-        "description": "Onboard a repository, subscription, and user access for Git-Ape CI/CD.",
-        "instructions": ".github/agents/git-ape-onboarding.agent.md"
+        "path": "./.github/agents/git-ape-onboarding.agent.md"
       }
     ],
     "chatSkills": [
       {
-        "id": "azure-cost-estimator",
-        "name": "azure-cost-estimator",
-        "description": "Estimate monthly costs for Azure resources using the Azure Retail Prices API.",
-        "directory": ".github/skills/azure-cost-estimator"
+        "path": "./.github/skills/azure-cost-estimator/SKILL.md"
       },
       {
-        "id": "azure-deployment-preflight",
-        "name": "azure-deployment-preflight",
-        "description": "Run preflight validation and what-if analysis on ARM templates.",
-        "directory": ".github/skills/azure-deployment-preflight"
+        "path": "./.github/skills/azure-deployment-preflight/SKILL.md"
       },
       {
-        "id": "azure-drift-detector",
-        "name": "azure-drift-detector",
-        "description": "Detect configuration drift between deployed Azure resources and stored state.",
-        "directory": ".github/skills/azure-drift-detector"
+        "path": "./.github/skills/azure-drift-detector/SKILL.md"
       },
       {
-        "id": "azure-integration-tester",
-        "name": "azure-integration-tester",
-        "description": "Run post-deployment integration tests for Azure resources.",
-        "directory": ".github/skills/azure-integration-tester"
+        "path": "./.github/skills/azure-integration-tester/SKILL.md"
       },
       {
-        "id": "azure-naming-research",
-        "name": "azure-naming-research",
-        "description": "Research Azure naming constraints and CAF abbreviations.",
-        "directory": ".github/skills/azure-naming-research"
+        "path": "./.github/skills/azure-naming-research/SKILL.md"
       },
       {
-        "id": "azure-policy-advisor",
-        "name": "azure-policy-advisor",
-        "description": "Assess Azure Policy compliance for ARM template resources.",
-        "directory": ".github/skills/azure-policy-advisor"
+        "path": "./.github/skills/azure-policy-advisor/SKILL.md"
       },
       {
-        "id": "azure-resource-availability",
-        "name": "azure-resource-availability",
-        "description": "Query Azure APIs to validate resource availability before deployment.",
-        "directory": ".github/skills/azure-resource-availability"
+        "path": "./.github/skills/azure-resource-availability/SKILL.md"
       },
       {
-        "id": "azure-resource-visualizer",
-        "name": "azure-resource-visualizer",
-        "description": "Generate Mermaid architecture diagrams from deployed Azure resources.",
-        "directory": ".github/skills/azure-resource-visualizer"
+        "path": "./.github/skills/azure-resource-visualizer/SKILL.md"
       },
       {
-        "id": "azure-rest-api-reference",
-        "name": "azure-rest-api-reference",
-        "description": "Look up Azure REST API and ARM template reference documentation.",
-        "directory": ".github/skills/azure-rest-api-reference"
+        "path": "./.github/skills/azure-rest-api-reference/SKILL.md"
       },
       {
-        "id": "azure-role-selector",
-        "name": "azure-role-selector",
-        "description": "Recommend least-privilege Azure RBAC roles for deployed resources.",
-        "directory": ".github/skills/azure-role-selector"
+        "path": "./.github/skills/azure-role-selector/SKILL.md"
       },
       {
-        "id": "azure-security-analyzer",
-        "name": "azure-security-analyzer",
-        "description": "Analyze Azure resource configurations against security best practices.",
-        "directory": ".github/skills/azure-security-analyzer"
+        "path": "./.github/skills/azure-security-analyzer/SKILL.md"
       },
       {
-        "id": "git-ape-onboarding",
-        "name": "git-ape-onboarding",
-        "description": "Onboard a repository for Git-Ape CI/CD with OIDC and RBAC setup.",
-        "directory": ".github/skills/git-ape-onboarding"
+        "path": "./.github/skills/git-ape-onboarding/SKILL.md"
       },
       {
-        "id": "prereq-check",
-        "name": "prereq-check",
-        "description": "Check that all required CLI tools are installed and authenticated.",
-        "directory": ".github/skills/prereq-check"
+        "path": "./.github/skills/prereq-check/SKILL.md"
       }
     ]
   }
