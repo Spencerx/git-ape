@@ -5,6 +5,14 @@ set -euo pipefail
 # Codespaces prebuilds. The three installs below are independent, so we
 # run them in parallel and skip work that has already been done.
 
+echo "==> Ensuring sandbox dependencies are installed..."
+if command -v bwrap >/dev/null 2>&1 && command -v socat >/dev/null 2>&1; then
+  echo "bubblewrap and socat already installed, skipping"
+else
+  sudo apt-get update
+  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends bubblewrap socat
+fi
+
 echo "==> Installing IaC security tools (parallel)..."
 
 log_dir="$(mktemp -d)"
