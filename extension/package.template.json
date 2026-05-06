@@ -1,0 +1,107 @@
+{
+  "name": "git-ape",
+  "displayName": "Git-Ape",
+  "description": "Intelligent Azure deployment agent system for GitHub Copilot. Provides guided, safe, and validated Azure resource deployments using ARM templates, with built-in security analysis, cost estimation, and CI/CD pipeline integration.",
+  "version": "0.0.1",
+  "publisher": "Git-ApeTeam",
+  "license": "MIT",
+  "icon": "APE.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Azure/git-ape"
+  },
+  "homepage": "https://github.com/Azure/git-ape",
+  "extensionKind": [
+    "workspace",
+    "ui"
+  ],
+  "categories": [
+    "Chat"
+  ],
+  "keywords": [
+    "azure",
+    "cloud",
+    "infrastructure",
+    "arm-templates",
+    "deployment",
+    "devops",
+    "iac",
+    "security",
+    "cost-estimation",
+    "github-actions",
+    "copilot",
+    "chat"
+  ],
+  "engines": {
+    "vscode": "^1.106.1"
+  },
+  "contributes": {
+    "chatAgents": [
+      {
+        "path": "./.github/agents/git-ape.agent.md"
+      },
+      {
+        "path": "./.github/agents/azure-iac-exporter.agent.md"
+      },
+      {
+        "path": "./.github/agents/azure-policy-advisor.agent.md"
+      },
+      {
+        "path": "./.github/agents/azure-principal-architect.agent.md"
+      },
+      {
+        "path": "./.github/agents/azure-requirements-gatherer.agent.md"
+      },
+      {
+        "path": "./.github/agents/azure-resource-deployer.agent.md"
+      },
+      {
+        "path": "./.github/agents/azure-template-generator.agent.md"
+      },
+      {
+        "path": "./.github/agents/git-ape-onboarding.agent.md"
+      }
+    ],
+    "chatSkills": [
+      {
+        "path": "./.github/skills/azure-cost-estimator/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-deployment-preflight/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-drift-detector/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-integration-tester/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-naming-research/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-policy-advisor/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-resource-availability/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-resource-visualizer/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-rest-api-reference/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-role-selector/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/azure-security-analyzer/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/git-ape-onboarding/SKILL.md"
+      },
+      {
+        "path": "./.github/skills/prereq-check/SKILL.md"
+      }
+    ]
+  }
+}
