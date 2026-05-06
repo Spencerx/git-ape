@@ -135,7 +135,7 @@ see [git-ape.agent.md](git-ape.agent.md).
 - Resource Group is a `Microsoft.Resources/resourceGroups` resource inside the template
 - Other resources go inside a nested `Microsoft.Resources/deployments` with `"resourceGroup"` property
 - Use `subscriptionResourceId()` for RG references, regular `resourceId()` inside nested
-- Deploy with `az deployment sub create` (not `az deployment group create`)
+- Deploy with `az stack sub create --action-on-unmanage deleteAll` (preferred) or `az deployment sub create` as a fallback (not `az deployment group create`)
 - `uniqueString()` uses `subscription().subscriptionId` instead of `resourceGroup().id`
 
 **Nested Template Requirements:**
@@ -691,7 +691,30 @@ After showing the preview, provide the complete ARM template:
 
 ## Deployment Commands
 
-**Azure CLI (Subscription-level deployment):**
+The canonical deploy and destroy paths live in the [`azure-stack-deploy`](../skills/azure-stack-deploy/SKILL.md) and [`azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md) skills. The commands below are reference recipes — prefer invoking the skills so local CLI / VS Code and CI pipelines stay in sync.
+
+**Azure CLI (Subscription-scoped Deployment Stack — preferred):**
+```bash
+az stack sub create \
+  --name {deployment-id} \
+  --location {location} \
+  --template-file template.json \
+  --parameters @parameters.json \
+  --action-on-unmanage deleteAll \
+  --deny-settings-mode none \
+  --description "Git-Ape deployment {deployment-id}" \
+  --tags "managedBy=git-ape" "deploymentId={deployment-id}" \
+  --yes \
+  --verbose
+```
+
+The stack tracks every managed resource (across resource groups and subscription scope), so destroy is a single idempotent command:
+
+```bash
+az stack sub delete --name {deployment-id} --action-on-unmanage deleteAll --bypass-stack-out-of-sync-error true --yes
+```
+
+**Azure CLI (Subscription-level deployment — fallback only):**
 ```bash
 az deployment sub create \
   --name {deployment-id} \
@@ -700,7 +723,20 @@ az deployment sub create \
   --parameters @parameters.json
 ```
 
-**PowerShell:**
+Use the fallback only when Deployment Stacks are unavailable in the target subscription/region. The fallback does NOT solve the soft-delete / multi-RG / sub-scope idempotency problem.
+
+**PowerShell (Deployment Stack — preferred):**
+```powershell
+New-AzSubscriptionDeploymentStack `
+  -Name {deployment-id} `
+  -Location {location} `
+  -TemplateFile template.json `
+  -TemplateParameterFile parameters.json `
+  -ActionOnUnmanage DeleteAll `
+  -DenySettingsMode None
+```
+
+**PowerShell (subscription deployment — fallback):**
 ```powershell
 New-AzSubscriptionDeployment `
   -Name {deployment-id} `
@@ -709,7 +745,7 @@ New-AzSubscriptionDeployment `
   -TemplateParameterFile parameters.json
 ```
 
-**Note:** We use subscription-level deployments so the resource group is created as part of the template. No need to create the RG separately.
+**Note:** We use subscription scope so the resource group is created as part of the template. No need to create the RG separately.
 ````
 
 ## Constraints

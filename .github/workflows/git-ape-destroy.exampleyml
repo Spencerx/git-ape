@@ -303,6 +303,7 @@ jobs:
           az stack sub delete \
             --name "$DEPLOYMENT_ID" \
             --action-on-unmanage deleteAll \
+            --bypass-stack-out-of-sync-error true \
             --yes 2>&1 || {
             echo "destroy_status=failed" >> "$GITHUB_OUTPUT"
             echo "::error::Failed to delete deployment stack $DEPLOYMENT_ID"

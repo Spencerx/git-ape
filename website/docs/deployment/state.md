@@ -167,6 +167,7 @@ Contains runtime deployment state populated after `az deployment` or `az stack` 
 
 ```json
 {
+  "schemaVersion": "1.0",
   "deploymentId": "deploy-20260218-143022",
   "timestamp": "2026-02-18T14:30:22Z",
   "status": "succeeded",
@@ -215,6 +216,7 @@ Contains runtime deployment state populated after `az deployment` or `az stack` 
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `schemaVersion` | `string` | State schema version. `"1.0"` is the current Deployment Stacks edition. Tools that consume `state.json` should branch on this when newer schemas ship. |
 | `stackId` | `string \| null` | Azure Deployment Stack resource ID. When present, destroy uses `az stack sub delete` for complete cleanup. |
 | `deployMethod` | `"stack" \| "subscription"` | Deployment method used. `stack` = Deployment Stacks (default); `subscription` = legacy `az deployment sub create`. |
 | `managedResources` | `array` | Flat list of all resources managed by this deployment, regardless of scope. Populated by walking deployment operations recursively. |
@@ -230,7 +232,7 @@ Contains runtime deployment state populated after `az deployment` or `az stack` 
 
 **Destroy strategy selection:**
 
-1. If `stackId` is present → `az stack sub delete --name <stackId> --action-on-unmanage deleteAll`
+1. If `stackId` is present → `az stack sub delete --name <stackId> --action-on-unmanage deleteAll --bypass-stack-out-of-sync-error true`
 2. If `stackId` is null → fallback to state-driven delete using `managedResources[]` and `resourceGroups[]`
 3. If neither field is populated (legacy state) → fall back to single `az group delete` on `resourceGroup`
 

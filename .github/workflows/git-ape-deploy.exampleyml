@@ -197,10 +197,15 @@ jobs:
 
       - name: Validate before deploy
         run: |
-          az deployment sub validate \
+          # Stack-aware validation — checks both the template and the
+          # stack-specific flags (--action-on-unmanage, --deny-settings-mode).
+          az stack sub validate \
+            --name "${{ matrix.deployment_id }}" \
             --location "${{ steps.params.outputs.location }}" \
             --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
             --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
+            --action-on-unmanage deleteAll \
+            --deny-settings-mode none \
             --output json
 
       - name: Run Microsoft Defender for DevOps template analyzer
@@ -247,6 +252,10 @@ jobs:
           # Determine deploy method: prefer deployment stacks (idempotent destroy)
           # Fall back to az deployment sub create if stacks are unavailable
           DEPLOY_METHOD="stack"
+          # Verbose output goes to a temp file so it does not contaminate the
+          # JSON that downstream jq calls need to parse.
+          VERBOSE_LOG=$(mktemp)
+          trap 'rm -f "$VERBOSE_LOG"' EXIT
 
           if [[ "$DEPLOY_METHOD" == "stack" ]]; then
             DEPLOY_OUTPUT=$(az stack sub create \
@@ -256,18 +265,24 @@ jobs:
               --parameters @"$DEPLOY_DIR/parameters.json" \
               --action-on-unmanage deleteAll \
               --deny-settings-mode none \
+              --description "Git-Ape deployment $DEPLOYMENT_ID" \
+              --tags "managedBy=git-ape" "deploymentId=$DEPLOYMENT_ID" \
               --yes \
-              --output json 2>&1)
+              --verbose \
+              --output json 2>"$VERBOSE_LOG")
           else
             DEPLOY_OUTPUT=$(az deployment sub create \
               --name "$DEPLOYMENT_ID" \
               --location "$LOCATION" \
               --template-file "$DEPLOY_DIR/template.json" \
               --parameters @"$DEPLOY_DIR/parameters.json" \
-              --output json 2>&1)
+              --output json 2>"$VERBOSE_LOG")
           fi
 
           EXIT_CODE=$?
+          if [[ $EXIT_CODE -ne 0 ]]; then
+            cat "$VERBOSE_LOG" >&2
+          fi
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
 
@@ -285,6 +300,20 @@ jobs:
             echo "=========================================="
             echo "$DEPLOY_OUTPUT"
             echo "=========================================="
+
+            # Surface underlying failed operations — the stack/deployment top-level
+            # error is usually a summary; the real root cause lives in the per-resource
+            # operations list.
+            echo "::group::Underlying failed operations"
+            az deployment sub show --name "$DEPLOYMENT_ID" --output json 2>/dev/null \
+              | jq -r '.properties // {}' \
+              || echo "No subscription-scope deployment details available."
+            az deployment operation sub list --name "$DEPLOYMENT_ID" --output json 2>/dev/null \
+              | jq -r '.[] | select(.properties.provisioningState == "Failed") |
+                  "──────────\nResource : \(.properties.targetResource.resourceName // "n/a") (\(.properties.targetResource.resourceType // "n/a"))\nStatus   : \(.properties.statusCode // "n/a")\nMessage  : \(.properties.statusMessage.error.message // .properties.statusMessage // "n/a")"' \
+              || echo "No per-operation details available (deployment may not have reached Azure)."
+            echo "::endgroup::"
+
             echo "::error::Deployment failed — see output above for details"
             exit 1
           fi
@@ -487,6 +516,7 @@ jobs:
 
           # Create/update state.json with extended schema
           jq -n \
+            --arg schemaVersion "1.0" \
             --arg deploymentId "${{ matrix.deployment_id }}" \
             --arg timestamp "$TIMESTAMP" \
             --arg status "$STATUS" \
@@ -506,6 +536,7 @@ jobs:
             --argjson resourceGroups "$RESOURCE_GROUPS" \
             --argjson subscriptions "[\"${{ secrets.AZURE_SUBSCRIPTION_ID }}\"]" \
             '{
+              schemaVersion: $schemaVersion,
               deploymentId: $deploymentId,
               timestamp: $timestamp,
               status: $status,

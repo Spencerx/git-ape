@@ -40,6 +40,13 @@ Skills are focused capabilities invoked by agents at specific stages of the depl
 | [Azure Rest Api Reference](./azure-rest-api-reference) | Look up Azure REST API and ARM template reference documentation for any resource type. Returns exact property schemas, required fields, valid values, and latest stable API versions. Use BEFORE generating or modifying ARM templates to ensure correctness. No Azure connection required. | ✅ |
 | [Git Ape Onboarding](./git-ape-onboarding) | Onboard a repository, Azure subscription(s), and user identity for Git-Ape CI/CD using a skill-driven CLI playbook. Use for first-time setup of OIDC, federated credentials, RBAC, GitHub environments, and required secrets. | ✅ |
 
+## General Skills
+
+| Skill | Description | Invocable |
+|-------|-------------|:---------:|
+| [Azure Stack Deploy](./azure-stack-deploy) | Deploy an ARM template as a subscription-scoped Azure Deployment Stack (idempotent across resource groups and sub-scope). Captures managed resources, classifies soft-deletable types, detects Key Vault purge protection, and writes extended state.json (schemaVersion 1.0). Use for any local CLI / VS Code Git-Ape deployment so the result matches the CI workflow. | ✅ |
+| [Azure Stack Destroy](./azure-stack-destroy) | Destroy a Git-Ape deployment by deleting its Azure Deployment Stack with --action-on-unmanage deleteAll, then purging soft-deleted resources (Key Vault, Cognitive Services) that are not purge-protected. Reads state.json (schemaVersion 1.0) to know exactly what to clean up. Use for any local CLI / VS Code Git-Ape teardown so the result matches the CI workflow. | ✅ |
+
 ## Skill Invocation in Deployment Flow
 
 ```mermaid
