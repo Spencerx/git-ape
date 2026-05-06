@@ -232,6 +232,34 @@ jobs:
             echo 'EOF'
           } >> "$GITHUB_OUTPUT"
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Assemble extension payload
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          cp LICENSE extension/
+          cp APE.png extension/
+          cp -r .github extension/.github
+
+          # Copy template and stamp the release version
+          jq --arg v "$VERSION" '.version = $v' extension/package.template.json > extension/package.json
+
+      - name: Package VSIX
+        working-directory: extension
+        run: |
+          set -euo pipefail
+          vsce package --no-dependencies --allow-missing-repository
+          echo "VSIX packaged:"
+          ls -lh ./*.vsix
+
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -256,6 +284,16 @@ jobs:
               --notes-file release-notes.md \
               $PRERELEASE_FLAG
           fi
+
+      - name: Upload VSIX to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.ver.outputs.tag }}
+        run: |
+          set -euo pipefail
+          VSIX_FILE=$(ls ./extension/*.vsix)
+          echo "Uploading $VSIX_FILE to release $TAG"
+          gh release upload "$TAG" "$VSIX_FILE" --clobber
 
       - name: Update CHANGELOG.md on main
         if: steps.ver.outputs.prerelease == 'false'
