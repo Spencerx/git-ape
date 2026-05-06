@@ -295,6 +295,22 @@ jobs:
           echo "Uploading $VSIX_FILE to release $TAG"
           gh release upload "$TAG" "$VSIX_FILE" --clobber
 
+      - name: Publish to VS Code Marketplace
+        if: steps.ver.outputs.prerelease == 'false'
+        working-directory: extension
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${VSCE_PAT:-}" ]]; then
+            echo "VSCE_PAT secret not set; skipping marketplace publish."
+            exit 0
+          fi
+          VSIX_FILE=$(ls ./*.vsix)
+          echo "Publishing $VSIX_FILE to VS Code Marketplace"
+          vsce publish --packagePath "$VSIX_FILE" --no-dependencies
+          gh release upload "$TAG" "$VSIX_FILE" --clobber
+
       - name: Update CHANGELOG.md on main
         if: steps.ver.outputs.prerelease == 'false'
         env:
