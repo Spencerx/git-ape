@@ -1,5 +1,5 @@
 {
-  "name": "Git-Ape Dev",
+  "name": "Git-Ape Agent Engineering",
   "image": "mcr.microsoft.com/devcontainers/python:3-3.12-bookworm",
 
   "features": {
@@ -14,19 +14,11 @@
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/copilot-cli:1": {},
     "ghcr.io/devcontainers/features/node:2.0.0": {
-      "version": "25"
+      "version": "24"
     }
   },
 
-  "onCreateCommand": "bash .devcontainer/post-create.sh",
-
-  "forwardPorts": [3333],
-  "portsAttributes": {
-    "3333": {
-      "label": "Docs Site",
-      "onAutoForward": "notify"
-    }
-  },
+  "onCreateCommand": "bash .devcontainer/agent-engineering/post-create.sh",
 
   "customizations": {
     "vscode": {
@@ -36,8 +28,7 @@
         "ms-azuretools.vscode-azureresourcegroups",
         "ms-azuretools.vscode-azurefunctions",
         "ms-azuretools.vscode-azure-mcp-server",
-        "bewhite.psrule-vscode",
-        "vstirbu.vscode-mermaid-preview"
+        "bewhite.psrule-vscode"
       ],
       "settings": {
         "azureMcp.serverMode": "namespace",
