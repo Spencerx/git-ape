@@ -67,7 +67,8 @@ pids[armttk]=$!
   else
     # The official install.sh auto-detects OS/arch, verifies the checksum,
     # and installs to /usr/local/bin (or ~/bin if not writable).
-    curl -fsSL https://raw.githubusercontent.com/microsoft/waza/main/install.sh | bash
+    # Use sudo so the binary lands in /usr/local/bin which is already on PATH.
+    curl -fsSL https://raw.githubusercontent.com/microsoft/waza/main/install.sh | sudo bash
   fi
 ) >"$log_dir/waza.log" 2>&1 &
 pids[waza]=$!
