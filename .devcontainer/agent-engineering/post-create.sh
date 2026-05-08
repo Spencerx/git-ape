@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # This script runs as `onCreateCommand` so its results are captured by
-# Codespaces prebuilds. The three installs below are independent, so we
+# Codespaces prebuilds. The four installs below are independent, so we
 # run them in parallel and skip work that has already been done.
 
 echo "==> Ensuring sandbox dependencies are installed..."
@@ -13,7 +13,7 @@ else
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends bubblewrap socat
 fi
 
-echo "==> Installing IaC security tools (parallel)..."
+echo "==> Installing agent engineering tools (parallel)..."
 
 log_dir="$(mktemp -d)"
 declare -A pids=()
@@ -58,6 +58,19 @@ pids[psrule]=$!
   fi
 ) >"$log_dir/armttk.log" 2>&1 &
 pids[armttk]=$!
+
+# waza — Microsoft CLI for evaluating AI agent skills
+# https://github.com/microsoft/waza
+(
+  if command -v waza >/dev/null 2>&1; then
+    echo "waza already installed: $(waza --version 2>/dev/null || echo unknown)"
+  else
+    # The official install.sh auto-detects OS/arch, verifies the checksum,
+    # and installs to /usr/local/bin (or ~/bin if not writable).
+    curl -fsSL https://raw.githubusercontent.com/microsoft/waza/main/install.sh | bash
+  fi
+) >"$log_dir/waza.log" 2>&1 &
+pids[waza]=$!
 
 # Wait for all background jobs and surface logs/failures.
 status=0
