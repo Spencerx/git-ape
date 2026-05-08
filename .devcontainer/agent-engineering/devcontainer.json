@@ -12,10 +12,7 @@
     "ghcr.io/devcontainers/features/azure-cli:1": {},
     "ghcr.io/devcontainers/features/powershell:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/copilot-cli:1": {},
-    "ghcr.io/devcontainers/features/node:2.0.0": {
-      "version": "24"
-    }
+    "ghcr.io/devcontainers/features/copilot-cli:1": {}
   },
 
   "onCreateCommand": "bash .devcontainer/agent-engineering/post-create.sh",

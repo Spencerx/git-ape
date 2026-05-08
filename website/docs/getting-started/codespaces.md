@@ -54,7 +54,7 @@ Optimized for Docusaurus development. Boots quickly and stays out of the way.
 Full toolchain for agent authoring, ARM template work, IaC scanning, and Azure deployments.
 
 - **Base image**: `python:3-3.12-bookworm`
-- **Features**: Azure CLI, PowerShell, GitHub CLI, Copilot CLI, Node 24
+- **Features**: Azure CLI, PowerShell, GitHub CLI, Copilot CLI
 - **Post-create**: installs Checkov, PSRule for Azure, ARM-TTK, and the [waza](https://github.com/microsoft/waza) skill-eval CLI in parallel
 - **Extensions**: GitHub Copilot, Copilot Chat, Azure Resource Groups, Azure Functions, Azure MCP Server, PSRule, [Chat Customizations Evaluations](https://github.com/microsoft/vscode-chat-customizations-evaluation)
 - **Settings**: Azure MCP server preconfigured (`namespace` mode, read/write enabled); `chatCustomizationsEvaluations.waza.command` set to `waza`
