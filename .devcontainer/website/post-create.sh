@@ -5,9 +5,12 @@ set -euo pipefail
 # the install is captured by Codespaces prebuilds.
 
 echo "==> Installing website dependencies..."
-if [ -f website/package.json ]; then
+if [ -f website/package-lock.json ]; then
+  (cd website && npm ci --no-audit --no-fund)
+  echo "==> Website dependencies installed (npm ci)"
+elif [ -f website/package.json ]; then
   (cd website && npm install --no-audit --no-fund)
-  echo "==> Website dependencies installed"
+  echo "==> Website dependencies installed (npm install — no lockfile)"
 else
   echo "==> website/package.json not found, skipping" >&2
   exit 1

@@ -45,7 +45,7 @@ pids[psrule]=$!
   if [ ! -f /home/vscode/.arm-ttk/arm-ttk/arm-ttk.psd1 ]; then
     rm -rf /home/vscode/.arm-ttk
     mkdir -p /home/vscode/.arm-ttk
-    git clone --depth 1 --single-branch --filter=blob:none \
+    git clone --depth 1 --single-branch --no-tags \
       https://github.com/Azure/arm-ttk.git /home/vscode/.arm-ttk
   else
     echo "arm-ttk already cloned, skipping"
