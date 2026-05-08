@@ -1,4 +1,4 @@
-![Git-Ape APE logo](docs/APE.png)
+![Git-Ape APE logo](APE.png)
 
 # Git-Ape
 
@@ -53,6 +53,8 @@ Prerequisites: VS Code with GitHub Copilot enabled and the `chat.plugins.enabled
 
 1. Add the marketplace in your VS Code `settings.json`:
 
+   [![Open Settings in VS Code](https://img.shields.io/badge/Open_Settings-VS_Code-007ACC?logo=visualstudiocode&logoColor=white)](https://azure.github.io/git-ape/open-settings.html) [![Open Settings in VS Code Insiders](https://img.shields.io/badge/Open_Settings-VS_Code_Insiders-24bfa5?logo=visualstudiocode&logoColor=white)](https://azure.github.io/git-ape/open-settings-insiders.html)
+
    ```jsonc
    "chat.plugins.marketplaces": [
        "Azure/git-ape"
@@ -71,6 +73,14 @@ copilot plugin install git-ape@git-ape
 copilot plugin list   # Should show: git-ape@git-ape
 ```
 
+Within Copilot CLI:
+
+```text
+/plugin marketplace add https://github.com/Azure/git-ape
+/plugin install git-ape@git-ape
+/plugin list   # Should show: git-ape@git-ape
+```
+
 #### Option C: Local development install
 
 Clone this repository and register the local checkout as a VS Code plugin in `settings.json`:
@@ -86,7 +96,7 @@ Reload VS Code; the `@git-ape` agent and Git-Ape skills will appear in Copilot C
 ### 2. Configure Azure access
 
 1. Sign in with `az login`.
-2. Configure the Azure MCP server in VS Code — see [docs/AZURE_MCP_SETUP.md](docs/AZURE_MCP_SETUP.md).
+2. Configure the Azure MCP server in VS Code — see the [Azure Setup](https://azure.github.io/git-ape/docs/getting-started/azure-setup) guide.
 
 ### 3. Use the agents
 
@@ -104,11 +114,11 @@ When you're done, clean up with:
 
 ## Where To Go Next
 
-- [docs/EXAMPLES.md](docs/EXAMPLES.md): Longer end-to-end examples and sample conversations.
-- [docs/AZURE_MCP_SETUP.md](docs/AZURE_MCP_SETUP.md): Azure MCP server configuration for VS Code.
-- [docs/DEPLOYMENT_STATE.md](docs/DEPLOYMENT_STATE.md): How deployment artifacts are stored and reused.
-- [docs/ONBOARDING.md](docs/ONBOARDING.md): Repository onboarding, OIDC, RBAC, and GitHub environment setup.
-- [docs/CODESPACES.md](docs/CODESPACES.md): GitHub Codespaces and dev container setup.
+- [Examples](https://azure.github.io/git-ape/docs/deployment/examples): End-to-end deployment walkthroughs.
+- [Azure Setup](https://azure.github.io/git-ape/docs/getting-started/azure-setup): Azure MCP server configuration for VS Code.
+- [State Management](https://azure.github.io/git-ape/docs/deployment/state): How deployment artifacts are stored and reused.
+- [Onboarding](https://azure.github.io/git-ape/docs/getting-started/onboarding): Repository onboarding, OIDC, RBAC, and GitHub environment setup.
+- [Codespaces](https://azure.github.io/git-ape/docs/getting-started/codespaces): GitHub Codespaces and dev container setup.
 
 ## Architecture
 

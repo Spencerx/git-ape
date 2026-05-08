@@ -1,0 +1,20 @@
+# actionlint configuration
+#
+# Suppress noisy shellcheck findings inside generated agentic workflow lock
+# files (`*.lock.yml` produced by `gh-aw compile`). These files MUST NOT be
+# hand-edited — the next compile will overwrite changes — so we whitelist the
+# specific patterns the codegen emits rather than silencing rules globally.
+#
+# SC2015 ("A && B || C is not if-then-else") fires on the codegen pattern:
+#   [ -f "$f" ] && cp "$f" /dest/ 2>/dev/null || true
+# which is intentional best-effort copy in threat-detection setup steps.
+#
+# SC2016 ("Expressions don't expand in single quotes") fires on the codegen
+# pattern that emits awf-config JSON via `printf '%s\n' '{"$schema":...}'`.
+# The `$schema` token is a literal JSON Schema key — single quotes are
+# correct so the shell does not interpolate.
+paths:
+  ".github/workflows/*.lock.yml":
+    ignore:
+      - 'shellcheck reported issue in this script: SC2015'
+      - 'shellcheck reported issue in this script: SC2016'
