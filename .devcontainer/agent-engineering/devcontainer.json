@@ -10,7 +10,6 @@
       "upgradePackages": false
     },
     "ghcr.io/devcontainers/features/azure-cli:1": {},
-    "ghcr.io/devcontainers/features/powershell:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/copilot-cli:1": {}
   },

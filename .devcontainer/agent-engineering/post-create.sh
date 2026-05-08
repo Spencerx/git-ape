@@ -28,15 +28,19 @@ declare -A pids=()
 ) >"$log_dir/checkov.log" 2>&1 &
 pids[checkov]=$!
 
-# PSRule for Azure — WAF-aligned rules for ARM/Bicep
+# PSRule for Azure — WAF-aligned rules for ARM/Bicep (optional when pwsh is available)
 (
-  pwsh -NoProfile -Command "
-    if (-not (Get-Module -ListAvailable -Name PSRule.Rules.Azure)) {
-      Install-Module -Name PSRule.Rules.Azure -Scope CurrentUser -Force -AcceptLicense -SkipPublisherCheck
-    } else {
-      Write-Host 'PSRule.Rules.Azure already installed, skipping'
-    }
-  "
+  if command -v pwsh >/dev/null 2>&1; then
+    pwsh -NoProfile -Command "
+      if (-not (Get-Module -ListAvailable -Name PSRule.Rules.Azure)) {
+        Install-Module -Name PSRule.Rules.Azure -Scope CurrentUser -Force -AcceptLicense -SkipPublisherCheck
+      } else {
+        Write-Host 'PSRule.Rules.Azure already installed, skipping'
+      }
+    "
+  else
+    echo "pwsh not found, skipping PSRule.Rules.Azure install"
+  fi
 ) >"$log_dir/psrule.log" 2>&1 &
 pids[psrule]=$!
 
@@ -49,12 +53,6 @@ pids[psrule]=$!
       https://github.com/Azure/arm-ttk.git /home/vscode/.arm-ttk
   else
     echo "arm-ttk already cloned, skipping"
-  fi
-  mkdir -p /home/vscode/.config/powershell
-  profile=/home/vscode/.config/powershell/Microsoft.PowerShell_profile.ps1
-  import_line='Import-Module /home/vscode/.arm-ttk/arm-ttk/arm-ttk.psd1'
-  if ! grep -qxF "$import_line" "$profile" 2>/dev/null; then
-    echo "$import_line" >> "$profile"
   fi
 ) >"$log_dir/armttk.log" 2>&1 &
 pids[armttk]=$!
