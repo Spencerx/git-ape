@@ -12,7 +12,7 @@ slug: /intro
 **EXPERIMENTAL PROJECT:** Git-Ape is in active development and is not production-ready. Use it for local development, demos, sandbox subscriptions, and learning only.
 :::
 
-Git-Ape is a **platform engineering framework** built on GitHub Copilot. It provides a structured, multi-agent system for planning, validating, and deploying Azure infrastructure — with security gates, cost analysis, and CI/CD pipeline integration built in.
+Git-Ape is a **platform engineering framework** built on GitHub Copilot. It provides a structured, multi-agent system for planning, validating, and deploying **any Azure workload** — with security gates, cost analysis, and CI/CD pipeline integration built in.
 
 It is the implementation of the thesis Microsoft published in [Platform Engineering for the Agentic AI Era](https://devblogs.microsoft.com/all-things-azure/platform-engineering-for-the-agentic-ai-era/) — agents and policy replacing module catalogues as the platform team's primary deliverable. See the **[Vision & Manifesto](./vision)** for the full thinking.
 
@@ -74,7 +74,8 @@ Git-Ape works in two modes:
 ```bash
 # Install the plugin
 copilot plugin marketplace add Azure/git-ape
-copilot plugin install Azure/git-ape
+copilot plugin install git-ape@git-ape
+copilot plugin list   # Should show: git-ape@git-ape
 
 # Check prerequisites
 # In Copilot Chat: /prereq-check

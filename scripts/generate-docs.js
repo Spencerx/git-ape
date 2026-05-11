@@ -252,9 +252,9 @@ function generateSkillDocs() {
 
     // Determine phase from skill content/name
     let phase = 'General';
-    const preDeploySkills = ['azure-naming-research', 'azure-resource-availability', 'azure-security-analyzer', 'azure-deployment-preflight', 'azure-role-selector', 'azure-cost-estimator', 'prereq-check', 'azure-policy-advisor'];
+    const preDeploySkills = ['azure-rest-api-reference', 'azure-naming-research', 'azure-resource-availability', 'azure-security-analyzer', 'azure-deployment-preflight', 'azure-role-selector', 'azure-cost-estimator', 'prereq-check', 'azure-policy-advisor'];
     const postDeploySkills = ['azure-integration-tester', 'azure-resource-visualizer'];
-    const opsSkills = ['azure-drift-detector', 'git-ape-onboarding', 'azure-rest-api-reference'];
+    const opsSkills = ['azure-drift-detector', 'git-ape-onboarding'];
 
     if (preDeploySkills.includes(name)) phase = 'Pre-Deploy';
     else if (postDeploySkills.includes(name)) phase = 'Post-Deploy';
@@ -423,7 +423,7 @@ description: "GitHub Actions workflow: ${name}"
 # ${name}
 
 **Workflow file:** \`.github/workflows/${file}\`
-
+${file.endsWith('.exampleyml') ? '\n:::info[Activation required]\nThis workflow ships as `' + file + '` and is **inert** until renamed to `' + file.replace(/\.exampleyml$/, '.yml') + '`. The [`/git-ape-onboarding`](/docs/skills/git-ape-onboarding) flow renames every `.exampleyml` file in `.github/workflows/` to `.yml` after you complete the experimental-status acknowledgments.\n:::\n' : ''}
 ## Triggers
 
 ${triggerSection}
@@ -464,6 +464,10 @@ description: "Overview of Git-Ape GitHub Actions workflows"
 # CI/CD Workflows Overview
 
 Git-Ape provides GitHub Actions workflows for automated deployment lifecycle management.
+
+:::info[Activation required]
+Workflows ship as **\`*.exampleyml\`** files in \`.github/workflows/\` so they are inert when the plugin is first installed. The [\`/git-ape-onboarding\`](/docs/skills/git-ape-onboarding) flow renames each \`.exampleyml\` to \`.yml\` after you complete the experimental-status acknowledgments. Files still ending in \`.exampleyml\` in the inventory below are not yet active.
+:::
 
 ## Workflow Inventory
 

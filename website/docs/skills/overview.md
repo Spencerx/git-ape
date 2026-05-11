@@ -21,6 +21,7 @@ Skills are focused capabilities invoked by agents at specific stages of the depl
 | [Azure Naming Research](./azure-naming-research) | Research Azure naming constraints and CAF abbreviations for a given resource type. Use when you need to look up the official CAF slug, naming rules (length, scope, valid characters), and derive validation/cleaning regex patterns for an Azure resource. Triggers on: CAF abbreviation lookup, Azure naming rules research, resource naming constraints. | ✅ |
 | [Azure Policy Advisor](./azure-policy-advisor) | Assess Azure Policy compliance for ARM template resources. Queries existing subscription assignments and unassigned custom/built-in definitions, cross-references with Microsoft Learn recommendations. Produces per-resource policy recommendations with implementation options. | ✅ |
 | [Azure Resource Availability](./azure-resource-availability) | Query live Azure APIs to validate resource availability before template generation or deployment. Checks VM SKU restrictions, Kubernetes/runtime version support, API version compatibility, and subscription quota. Use during requirements gathering and preflight to catch deployment failures early. | ✅ |
+| [Azure REST API Reference](./azure-rest-api-reference) | Look up Azure REST API and ARM template reference documentation for any resource type. Returns exact property schemas, required fields, valid values, and latest stable API versions. Use BEFORE generating or modifying ARM templates to ensure correctness. No Azure connection required. | ✅ |
 | [Azure Role Selector](./azure-role-selector) | Recommend least-privilege Azure RBAC roles for deployed resources. Finds minimal built-in roles matching desired permissions or creates custom role definitions. Use during security analysis or when configuring access for service principals and managed identities. | ✅ |
 | [Azure Security Analyzer](./azure-security-analyzer) | Analyze Azure resource configurations against security best practices using Azure MCP bestpractices service. Produces per-resource security assessment with severity ratings and recommendations. Use during template generation before deployment confirmation. | ✅ |
 | [Prereq Check](./prereq-check) | Check that all required CLI tools are installed, meet minimum versions, and have active auth sessions. Shows platform-specific install commands for anything missing. | ✅ |
@@ -37,7 +38,6 @@ Skills are focused capabilities invoked by agents at specific stages of the depl
 | Skill | Description | Invocable |
 |-------|-------------|:---------:|
 | [Azure Drift Detector](./azure-drift-detector) | Detect configuration drift between deployed Azure resources and stored deployment state. Compare actual Azure configuration against desired state in .azure/deployments/, identify differences, and guide user through reconciliation options. Use when checking for manual changes, policy remediations, or unauthorized modifications. | ✅ |
-| [Azure Rest Api Reference](./azure-rest-api-reference) | Look up Azure REST API and ARM template reference documentation for any resource type. Returns exact property schemas, required fields, valid values, and latest stable API versions. Use BEFORE generating or modifying ARM templates to ensure correctness. No Azure connection required. | ✅ |
 | [Git Ape Onboarding](./git-ape-onboarding) | Onboard a repository, Azure subscription(s), and user identity for Git-Ape CI/CD using a skill-driven CLI playbook. Use for first-time setup of OIDC, federated credentials, RBAC, GitHub environments, and required secrets. | ✅ |
 
 ## Skill Invocation in Deployment Flow
@@ -45,13 +45,13 @@ Skills are focused capabilities invoked by agents at specific stages of the depl
 ```mermaid
 graph LR
     subgraph Pre["Pre-Deploy"]
-        S1["/azure-cost-estimator\n/azure-deployment-preflight\n/azure-naming-research\n/azure-policy-advisor\n/azure-resource-availability\n/azure-role-selector\n/azure-security-analyzer\n/prereq-check"]
+        S1["/azure-cost-estimator\n/azure-deployment-preflight\n/azure-naming-research\n/azure-policy-advisor\n/azure-resource-availability\n/azure-rest-api-reference\n/azure-role-selector\n/azure-security-analyzer\n/prereq-check"]
     end
     subgraph Post["Post-Deploy"]
         S2["/azure-integration-tester\n/azure-resource-visualizer"]
     end
     subgraph Ops["Operations"]
-        S3["/azure-drift-detector\n/azure-rest-api-reference\n/git-ape-onboarding"]
+        S3["/azure-drift-detector\n/git-ape-onboarding"]
     end
     Pre --> Post --> Ops
 

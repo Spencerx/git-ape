@@ -24,6 +24,10 @@ Git-Ape can automate the entire setup for you, or you can run each step manually
 
 Both paths produce the same result: an Entra ID App Registration with OIDC federated credentials, RBAC role assignments, and GitHub environments with the required secrets.
 
+:::info[Workflow activation is part of onboarding]
+Git-Ape ships its CI/CD workflows as **`*.exampleyml`** files in `.github/workflows/` (`git-ape-plan.exampleyml`, `git-ape-deploy.exampleyml`, `git-ape-destroy.exampleyml`, `git-ape-verify.exampleyml`). These files are **inert** until the onboarding flow renames each one to `.yml`. The automated `/git-ape-onboarding` flow performs this rename only after you complete the experimental-status acknowledgments; the manual flow includes a final step to rename them yourself.
+:::
+
 ## Choose single or multi-environment mode {#choose-mode}
 
 Before onboarding, decide how many Azure subscriptions you need.
