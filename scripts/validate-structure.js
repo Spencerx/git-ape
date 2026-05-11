@@ -71,15 +71,18 @@ function parseFrontmatter(filePath) {
 }
 
 function extractSlashCommands(content) {
-  // Match /skill-name patterns that look like intentional skill invocations
-  // Exclude common false positives: file paths, URLs, API paths
+  // Match /skill-name patterns that look like intentional skill invocations.
+  // Allow common Markdown/text delimiters before the slash so inline-code
+  // references like `/azure-policy-advisor` and wrapped forms like
+  // (/azure-policy-advisor) are detected too.
+  // Exclude common false positives: file paths, URLs, API paths.
   const PATH_PREFIXES = new Set([
     'etc', 'dev', 'usr', 'var', 'tmp', 'home', 'opt', 'bin', 'sbin',
     'api', 'v1', 'v2', 'v3', 'subscriptions', 'providers', 'admin',
   ]);
-  const matches = content.match(/(?:^|\s)\/([a-z][a-z0-9-]*)/gm) || [];
+  const matches = [...content.matchAll(/(?:^|[\s`([{])\/([a-z][a-z0-9-]*)/gm)];
   return matches
-    .map((m) => m.trim().slice(1))
+    .map((m) => m[1])
     .filter((cmd) => !PATH_PREFIXES.has(cmd) && !cmd.includes('/'));
 }
 
