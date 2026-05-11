@@ -117,8 +117,6 @@ jobs:
             "git-ape-plan.yml:Git-Ape: Plan"
             "git-ape-deploy.yml:Git-Ape: Deploy"
             "git-ape-destroy.yml:Git-Ape: Destroy"
-            "git-ape-drift.yml:Git-Ape: Drift Detection"
-            "git-ape-ttl-reaper.yml:Git-Ape: TTL Reaper"
           )
 
           for WF in "${WORKFLOWS[@]}"; do

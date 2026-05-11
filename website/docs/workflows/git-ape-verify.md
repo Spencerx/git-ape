@@ -11,6 +11,10 @@ description: "GitHub Actions workflow: Git-Ape: Verify Setup"
 
 **Workflow file:** `.github/workflows/git-ape-verify.exampleyml`
 
+:::info[Activation required]
+This workflow ships as `git-ape-verify.exampleyml` and is **inert** until renamed to `git-ape-verify.yml`. The [`/git-ape-onboarding`](/docs/skills/git-ape-onboarding) flow renames every `.exampleyml` file in `.github/workflows/` to `.yml` after you complete the experimental-status acknowledgments.
+:::
+
 ## Triggers
 
 - **`workflow_dispatch`**
@@ -158,8 +162,6 @@ jobs:
             "git-ape-plan.yml:Git-Ape: Plan"
             "git-ape-deploy.yml:Git-Ape: Deploy"
             "git-ape-destroy.yml:Git-Ape: Destroy"
-            "git-ape-drift.yml:Git-Ape: Drift Detection"
-            "git-ape-ttl-reaper.yml:Git-Ape: TTL Reaper"
           )
 
           for WF in "${WORKFLOWS[@]}"; do

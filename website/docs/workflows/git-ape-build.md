@@ -1,0 +1,98 @@
+---
+title: "Git-Ape: Extension Build"
+sidebar_label: "Extension Build"
+description: "GitHub Actions workflow: Git-Ape: Extension Build"
+---
+
+<!-- AUTO-GENERATED — DO NOT EDIT. Source: .github/workflows/git-ape-build.yml -->
+
+
+# Git-Ape: Extension Build
+
+**Workflow file:** `.github/workflows/git-ape-build.yml`
+
+## Triggers
+
+- **`pull_request`** — paths: `.github/agents/**, .github/skills/**, .github/copilot/**...`
+
+
+## Permissions
+
+- `contents: read`
+
+## Jobs
+
+### `build`
+
+| Property | Value |
+|----------|-------|
+| **Display Name** | build |
+| **Runs On** | `ubuntu-latest` |
+| **Steps** | 6 |
+
+
+
+## Source
+
+<details>
+<summary>Click to view full workflow YAML</summary>
+
+```yaml
+name: "Git-Ape: Extension Build"
+
+on:
+  pull_request:
+    paths:
+      - '.github/agents/**'
+      - '.github/skills/**'
+      - '.github/copilot/**'
+      - '.github/plugin/**'
+      - 'plugin.json'
+      - 'extension/**'
+      - 'APE.png'
+      - 'LICENSE'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Assemble extension payload
+        run: |
+          set -euo pipefail
+          cp LICENSE extension/
+          cp APE.png extension/
+          cp -r .github extension/.github
+          cp extension/package.template.json extension/package.json
+
+      - name: Package VSIX
+        working-directory: extension
+        run: |
+          set -euo pipefail
+          vsce package --no-dependencies --allow-missing-repository
+          echo "VSIX packaged:"
+          ls -lh ./*.vsix
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: git-ape-vsix
+          path: extension/*.vsix
+          if-no-files-found: error
+
+```
+
+</details>
