@@ -73,7 +73,7 @@ Git-Ape works in two modes:
 
 Visual Studio Code Extension: 
 
-[![Install from VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Git-ApeTeam.git-ape?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) [![Install in VS Code](https://img.shields.io/badge/Install-VS_Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/Git-ApeTeam.git-ape) [![Install in VS Code Insiders](https://img.shields.io/badge/Install-VS_Code_Insiders-24bfa5?logo=visualstudiocode&logoColor=white)](vscode-insiders:extension/Git-ApeTeam.git-ape)
+[![Install from VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Git-ApeTeam.git-ape?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) [![Install in VS Code](https://img.shields.io/badge/Install-VS_Code-007ACC?logo=visualstudiocode&logoColor=white)](pathname:///install.html) [![Install in VS Code Insiders](https://img.shields.io/badge/Install-VS_Code_Insiders-24bfa5?logo=visualstudiocode&logoColor=white)](pathname:///install-insiders.html)
 
 Or GitHub Copilot CLI:
 

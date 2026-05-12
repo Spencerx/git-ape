@@ -51,7 +51,7 @@ Git-Ape ships as a [VS Code agent plugin](https://code.visualstudio.com/docs/cop
 
 The fastest way to install Git-Ape in VS Code. The published listing bundles all agents and skills as a VS Code extension.
 
-[![Install from VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Git-ApeTeam.git-ape?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) [![Install from Open VSX](https://img.shields.io/badge/Install-VS_Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/Git-ApeTeam.git-ape) [![Install in VS Code Insiders](https://img.shields.io/badge/Install-VS_Code_Insiders-24bfa5?logo=visualstudiocode&logoColor=white)](vscode-insiders:extension/Git-ApeTeam.git-ape)
+[![Install from VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Git-ApeTeam.git-ape?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) [![Install in VS Code](https://img.shields.io/badge/Install-VS_Code-007ACC?logo=visualstudiocode&logoColor=white)](https://azure.github.io/git-ape/install.html) [![Install in VS Code Insiders](https://img.shields.io/badge/Install-VS_Code_Insiders-24bfa5?logo=visualstudiocode&logoColor=white)](https://azure.github.io/git-ape/install-insiders.html)
 
 1. Open the [Git-Ape listing on the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) and click **Install**, or use one of the badges above to open VS Code directly.
 2. Verify the agents and skills appear in Copilot Chat — type `@git-ape` or `/prereq-check`.
