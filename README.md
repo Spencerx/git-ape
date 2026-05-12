@@ -8,7 +8,7 @@
 
 **📖 Documentation:** [azure.github.io/git-ape](https://azure.github.io/git-ape/) &nbsp;•&nbsp; **🛒 VS Code Marketplace:** [Git-ApeTeam.git-ape](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape)
 
-Git-Ape is a **platform engineering framework** built on GitHub Copilot. It is a multi-agent system that plans, validates, and deploys anything cloud — with security gates, cost analysis, and CI/CD pipeline integration built in.
+Git-Ape is a **platform engineering framework** built on GitHub Copilot. It is a multi-agent system that plans, validates, and deploys **any Azure workload** — with security gates, cost analysis, and CI/CD pipeline integration built in.
 
 Nothing is deployed without your explicit confirmation.
 
@@ -23,10 +23,10 @@ Git-Ape walks every deployment through the same four steps:
 
 It is built for:
 
-- Azure application stacks: Function Apps, Web Apps, Storage, SQL, Cosmos DB, Container Apps.
+- Any Azure resource deployable via Azure Resource Manager.
 - Repository onboarding: OIDC, RBAC, GitHub environments, and secrets.
 - Auditable deployments: every run is saved under `.azure/deployments/`.
-- Drift detection between live Azure state and stored deployment artifacts *(agentic workflow — coming soon)*.
+- Drift detection between live Azure state and stored deployment artifacts via the `/azure-drift-detector` skill.
 
 ## Git-Ape in action
 
@@ -157,6 +157,7 @@ graph TD
 
     subgraph AD ["Advisory"]
         PA["<b>Principal Architect</b><br/>WAF 5-pillar review<br/>Trade-off analysis"]
+        PO["<b>Policy Advisor</b><br/>Azure Policy compliance<br/>CIS / NIST mapping"]
     end
 
     subgraph UT ["Utility"]
@@ -173,7 +174,7 @@ graph TD
     class GA orchestrator
     class RG,TG,RD pipeline
     class SG,UC gate
-    class WR,PA advisory
+    class WR,PA,PO advisory
     class IE,OB utility
 ```
 
@@ -183,9 +184,11 @@ Skills are invoked by agents at specific stages. Each skill handles one focused 
 
 | Phase | Skill | Purpose |
 |-------|-------|---------|
-| **Pre-Deploy** | `/azure-naming-research` | CAF abbreviation lookup, naming constraint validation |
+| **Pre-Deploy** | `/azure-rest-api-reference` | Look up ARM property schemas and API versions. **Mandatory before any template generation.** |
+| | `/azure-naming-research` | CAF abbreviation lookup, naming constraint validation |
 | | `/azure-resource-availability` | SKU restrictions, version support, API compatibility, quota |
 | | `/azure-security-analyzer` | Per-resource security assessment with blocking gate |
+| | `/azure-policy-advisor` | Azure Policy compliance recommendations against CIS, NIST, or general best-practice frameworks |
 | | `/azure-deployment-preflight` | What-if analysis and permission checks before deploy |
 | | `/azure-role-selector` | Least-privilege RBAC role recommendations |
 | | `/azure-cost-estimator` | Real-time cost estimation via Azure Retail Prices API |
@@ -297,7 +300,7 @@ graph LR
 | `git-ape-destroy.yml` | Merge PR with `destroy-requested` | Delete resource group |
 | `git-ape-verify.yml` | Manual dispatch | Verify OIDC, RBAC, pipeline health |
 
-> **Note:** Drift detection and TTL-based cleanup were previously handled by scheduled workflows (`git-ape-drift.yml`, `git-ape-ttl-reaper.yml`). These are being replaced by agentic workflows — coming soon.
+> **Note:** These workflows ship as `git-ape-*.exampleyml` files in `.github/workflows/` and are inert until the `/git-ape-onboarding` flow renames them to `.yml` after you complete the experimental-status acknowledgments.
 
 ## Included Components
 
@@ -307,29 +310,33 @@ Git-Ape is packaged as a Copilot CLI plugin with agents and skills under `.githu
 plugin.json                          # Plugin manifest
 .github/
 ├── agents/
-│   ├── git-ape.agent.md             # Main orchestrator
-│   ├── git-ape-onboarding.agent.md  # Onboarding agent
+│   ├── git-ape.agent.md                       # Main orchestrator
+│   ├── git-ape-onboarding.agent.md            # Onboarding agent
 │   ├── azure-requirements-gatherer.agent.md
 │   ├── azure-template-generator.agent.md
 │   ├── azure-resource-deployer.agent.md
 │   ├── azure-principal-architect.agent.md
+│   ├── azure-policy-advisor.agent.md
 │   └── azure-iac-exporter.agent.md
 ├── skills/
 │   ├── git-ape-onboarding/          # OIDC, RBAC, env setup
+│   ├── azure-rest-api-reference/    # ARM property + API version lookup
 │   ├── azure-naming-research/       # CAF naming
 │   ├── azure-resource-availability/ # SKU & quota checks
 │   ├── azure-security-analyzer/     # Security assessment
+│   ├── azure-policy-advisor/        # Azure Policy compliance
 │   ├── azure-deployment-preflight/  # What-if analysis
 │   ├── azure-role-selector/         # RBAC recommendations
 │   ├── azure-cost-estimator/        # Cost estimation
 │   ├── azure-drift-detector/        # Drift detection
 │   ├── azure-integration-tester/    # Post-deploy tests
-│   └── azure-resource-visualizer/   # Architecture diagrams
+│   ├── azure-resource-visualizer/   # Architecture diagrams
+│   └── prereq-check/                # CLI tool + auth session verification
 └── workflows/
-    ├── git-ape-plan.yml
-    ├── git-ape-deploy.yml
-    ├── git-ape-destroy.yml
-    └── git-ape-verify.yml
+    ├── git-ape-plan.exampleyml      # Activated to .yml by /git-ape-onboarding
+    ├── git-ape-deploy.exampleyml
+    ├── git-ape-destroy.exampleyml
+    └── git-ape-verify.exampleyml
 ```
 
 See [plugin.json](plugin.json) and [.github/plugin/marketplace.json](.github/plugin/marketplace.json) for packaging details.
