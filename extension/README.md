@@ -65,6 +65,7 @@ This path requires `chat.plugins.enabled` to be `true` for your organization
 
    Alternatively, run **Chat: Install Plugin From Source** from the Command
    Palette and enter `https://github.com/Azure/git-ape`.
+
 ### Configure Azure access
 
 Sign in with `az login` and configure the Azure MCP server in VS Code — see the
