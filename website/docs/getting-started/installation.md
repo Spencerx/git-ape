@@ -22,14 +22,28 @@ Run `/prereq-check` in Copilot Chat after installation. It validates every tool 
 
 | Method | Best for | Requirements |
 |--------|----------|--------------|
-| **VS Code plugin** | Day-to-day Azure deployments from your editor | VS Code + Copilot + `chat.plugins.enabled` |
+| **VS Code Marketplace** | One-click install for VS Code users | VS Code + Copilot |
+| **VS Code marketplaces setting** | Advanced workflows, multi-plugin marketplaces | VS Code + Copilot + `chat.plugins.enabled` |
 | **Copilot CLI plugin** | Terminal-first workflows or CI scripting | Copilot CLI |
 | **Local dev install** | Contributing to Git-Ape itself | Git clone of the repo |
 | **GitHub Codespaces** | Trying Git-Ape without any local setup | GitHub account |
 
-Most users should start with the **VS Code plugin**. If you just want to try Git-Ape without installing anything, jump to [Codespaces](./codespaces).
+Most users should start with the **VS Code Marketplace** option. If you just want to try Git-Ape without installing anything, jump to [Codespaces](./codespaces).
 
-## Option A: VS Code agent plugin (recommended) {#vscode-plugin}
+## Option A: VS Code Marketplace (one-click) {#vscode-marketplace}
+
+The fastest way to install Git-Ape in VS Code. The published listing bundles all agents and skills as a regular VS Code extension — no `chat.plugins.enabled` setting required.
+
+[![Install from VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Git-ApeTeam.git-ape?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) [![Install in VS Code](https://img.shields.io/badge/Install-VS_Code-007ACC?logo=visualstudiocode&logoColor=white)](vscode:extension/Git-ApeTeam.git-ape) [![Install in VS Code Insiders](https://img.shields.io/badge/Install-VS_Code_Insiders-24bfa5?logo=visualstudiocode&logoColor=white)](vscode-insiders:extension/Git-ApeTeam.git-ape)
+
+1. Open the [Git-Ape listing on the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) and click **Install**, or use one of the badges above to open VS Code directly.
+2. Verify the agents and skills appear in Copilot Chat — type `@git-ape` or `/prereq-check`.
+
+:::tip[Direct install URI]
+You can also paste `vscode:extension/Git-ApeTeam.git-ape` into your browser to launch VS Code and install in one step. Use `vscode-insiders:extension/Git-ApeTeam.git-ape` for VS Code Insiders.
+:::
+
+## Option B: VS Code marketplaces setting {#vscode-plugin}
 
 Your organization must have the `chat.plugins.enabled` setting set to `true`. If you are unsure, ask your admin or try the steps below — VS Code will tell you if plugins are disabled.
 
@@ -49,7 +63,7 @@ Your organization must have the `chat.plugins.enabled` setting set to `true`. If
 
 3. Verify the agents and skills appear in Copilot Chat — type `@git-ape` or `/prereq-check`.
 
-## Option B: Copilot CLI plugin {#cli-plugin}
+## Option C: Copilot CLI plugin {#cli-plugin}
 
 ```bash
 copilot plugin marketplace add Azure/git-ape
@@ -57,7 +71,7 @@ copilot plugin install git-ape@git-ape
 copilot plugin list   # Should show: git-ape@git-ape
 ```
 
-## Option C: Local development install {#local-dev}
+## Option D: Local development install {#local-dev}
 
 Use this if you are contributing to Git-Ape or want to test local changes.
 

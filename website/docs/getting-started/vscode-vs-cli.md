@@ -18,7 +18,7 @@ Git-Ape ships as a single cross-tool plugin. The same `plugin.json` manifest at 
 | Skills auto-loading | ✅ Listed under **Configure Skills** | ✅ Listed via `copilot skill list` |
 | MCP servers | ✅ Auto-started, listed in **MCP: List Servers** | ✅ Started by CLI on session start |
 | Hooks (`SessionStart`, `PreToolUse`, …) | ✅ Run alongside workspace hooks | ✅ Run alongside CLI hooks |
-| Marketplace install | ✅ `chat.plugins.marketplaces` | ✅ `copilot plugin marketplace add` |
+| Marketplace install | ✅ [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) · `chat.plugins.marketplaces` | ✅ `copilot plugin marketplace add` |
 | Install from source | ✅ **Chat: Install Plugin From Source** | ✅ `copilot plugin install <git-url>` |
 | Local dev install | ✅ `chat.pluginLocations` | ✅ Local clone + plugin link |
 | Per-workspace enable/disable | ✅ Extensions view + Chat Customizations editor | ✅ Per-project plugin config |
@@ -43,7 +43,7 @@ Both modes share the same security gates, cost estimator, and deployment state u
 
 ## Workspace recommendation
 
-This repository ships a workspace recommendation at [.github/copilot/settings.json](https://github.com/Azure/git-ape/blob/main/.github/copilot/settings.json) so contributors who open it in VS Code with `chat.plugins.enabled: true` get prompted to install Git-Ape automatically:
+This repository ships a workspace recommendation at [.github/copilot/settings.json](https://github.com/Azure/git-ape/blob/main/.github/copilot/settings.json) so contributors who open it in VS Code with `chat.plugins.enabled: true` get prompted to install Git-Ape automatically through the agent-plugin marketplace:
 
 ```jsonc
 {
@@ -57,6 +57,8 @@ This repository ships a workspace recommendation at [.github/copilot/settings.js
   }
 }
 ```
+
+If your organization has `chat.plugins.enabled` disabled, contributors can install Git-Ape from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) instead — that path is a regular extension install and bypasses the plugin gating.
 
 The same file is honored by the Copilot CLI when running inside the workspace.
 
