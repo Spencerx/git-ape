@@ -154,7 +154,7 @@ Run `/prereq-check` in Copilot Chat to validate tools and auth sessions automati
 :::
 
 :::info[VS Code agent plugin requirement]
-Git-Ape ships as a [VS Code agent plugin](https://code.visualstudio.com/docs/copilot/customization/agent-plugins) (and as a Copilot CLI plugin). The VS Code surface is gated by the **`chat.plugins.enabled`** setting, which is **managed at the organization level**. If contributors install the plugin but `@git-ape` and the Git-Ape skills do not appear in Copilot Chat, ask your GitHub Copilot administrator to enable agent plugins for your organization. The Copilot CLI surface is not affected by this setting.
+Git-Ape is available both as a regular [VS Code extension](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) and as a [VS Code agent plugin](https://code.visualstudio.com/docs/copilot/customization/agent-plugins) (and as a Copilot CLI plugin). The **agent-plugin** install path is gated by the **`chat.plugins.enabled`** setting, which is **managed at the organization level**. If contributors used the agent-plugin path (`chat.plugins.marketplaces` / `copilot plugin install`) and `@git-ape` does not appear in Copilot Chat, either ask your GitHub Copilot administrator to enable agent plugins, or have contributors install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) instead — that path is not affected by the setting. The Copilot CLI surface is also not affected.
 :::
 
 <details>

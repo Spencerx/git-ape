@@ -71,8 +71,15 @@ Git-Ape works in two modes:
 
 ## Quick Start
 
+Visual Studio Code Extension: 
+
+[![Install from VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Git-ApeTeam.git-ape?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) [![Install in VS Code](https://img.shields.io/badge/Install-VS_Code-007ACC?logo=visualstudiocode&logoColor=white)](pathname:///install.html) [![Install in VS Code Insiders](https://img.shields.io/badge/Install-VS_Code_Insiders-24bfa5?logo=visualstudiocode&logoColor=white)](pathname:///install-insiders.html)
+
+Or GitHub Copilot CLI:
+
 ```bash
-# Install the plugin
+# Install the plugin (VS Code Marketplace is the one-click route above)
+# Copilot CLI route:
 copilot plugin marketplace add Azure/git-ape
 copilot plugin install git-ape@git-ape
 copilot plugin list   # Should show: git-ape@git-ape
@@ -83,6 +90,8 @@ copilot plugin list   # Should show: git-ape@git-ape
 # Deploy something
 # In Copilot Chat: @git-ape deploy a Python function app
 ```
+
+See [Installation & Prerequisites](./getting-started/installation) for every install path.
 
 ## Next Steps
 

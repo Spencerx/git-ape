@@ -6,7 +6,7 @@
 > EXPERIMENTAL PROJECT: Git-Ape is in active development and is not production-ready.
 > Use it for local development, demos, sandbox subscriptions, and learning only.
 
-**📖 Documentation:** [azure.github.io/git-ape](https://azure.github.io/git-ape/)
+**📖 Documentation:** [azure.github.io/git-ape](https://azure.github.io/git-ape/) &nbsp;•&nbsp; **🛒 VS Code Marketplace:** [Git-ApeTeam.git-ape](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape)
 
 Git-Ape is a **platform engineering framework** built on GitHub Copilot. It is a multi-agent system that plans, validates, and deploys **any Azure workload** — with security gates, cost analysis, and CI/CD pipeline integration built in.
 
@@ -47,9 +47,18 @@ A short demo video of the onboarding and deploy experience using Git-Ape.
 
 Git-Ape ships as a [VS Code agent plugin](https://code.visualstudio.com/docs/copilot/customization/agent-plugins) and as a GitHub Copilot CLI plugin. Pick the path that matches how you use Copilot.
 
-#### Option A: VS Code agent plugin (recommended for VS Code users)
+#### Option A: VS Code Marketplace (one-click)
 
-Prerequisites: VS Code with GitHub Copilot enabled and the `chat.plugins.enabled` setting set to `true` (managed at the organization level).
+The fastest way to install Git-Ape in VS Code. The published listing bundles all agents and skills as a VS Code extension.
+
+[![Install from VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Git-ApeTeam.git-ape?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) [![Install in VS Code](https://img.shields.io/badge/Install-VS_Code-007ACC?logo=visualstudiocode&logoColor=white)](https://azure.github.io/git-ape/install.html) [![Install in VS Code Insiders](https://img.shields.io/badge/Install-VS_Code_Insiders-24bfa5?logo=visualstudiocode&logoColor=white)](https://azure.github.io/git-ape/install-insiders.html)
+
+1. Open the [Git-Ape listing on the VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) and click **Install**, or use one of the badges above to open VS Code directly.
+2. Verify the agents and skills appear in Copilot Chat — type `@git-ape` or `/prereq-check`.
+
+#### Option B: VS Code marketplaces setting (advanced)
+
+Use this path if you want to pull the latest from GitHub on every update, or if you also want the [`ape-context`](https://github.com/suuus/ape-context) companion plugin from the same marketplace.
 
 1. Add the marketplace in your VS Code `settings.json`:
 
@@ -65,7 +74,7 @@ Prerequisites: VS Code with GitHub Copilot enabled and the `chat.plugins.enabled
 3. Alternatively, open the Command Palette (`⇧⌘P` on macOS, `Ctrl+Shift+P` on Windows/Linux), run **Chat: Install Plugin From Source**, and enter `https://github.com/Azure/git-ape`.
 4. Verify the agents and skills appear in Copilot Chat (for example, type `@git-ape` or `/prereq-check`).
 
-#### Option B: Copilot CLI plugin
+#### Option C: Copilot CLI plugin
 
 ```bash
 copilot plugin marketplace add Azure/git-ape
@@ -81,7 +90,7 @@ Within Copilot CLI:
 /plugin list   # Should show: git-ape@git-ape
 ```
 
-#### Option C: Local development install
+#### Option D: Local development install
 
 Clone this repository and register the local checkout as a VS Code plugin in `settings.json`:
 
