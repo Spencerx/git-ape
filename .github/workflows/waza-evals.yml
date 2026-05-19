@@ -70,6 +70,31 @@ concurrency:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # preflight: verify that the COPILOT_GITHUB_TOKEN secret is configured.
+  # When absent, every downstream job is skipped cleanly (no red checks). The
+  # maintainer setup steps are in PR #109 / README.
+  # ---------------------------------------------------------------------------
+  preflight:
+    name: Preflight (check secrets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - name: Check COPILOT_GITHUB_TOKEN availability
+        id: check
+        env:
+          TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
+        run: |
+          if [ -n "${TOKEN:-}" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "COPILOT_GITHUB_TOKEN is set — eval jobs will run."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::COPILOT_GITHUB_TOKEN secret is not set. Skipping all waza skill eval jobs. See repo README / PR #109 for setup."
+          fi
+
+  # ---------------------------------------------------------------------------
   # prepare: read .github/evals/manifest.yaml and decide which skills to
   # evaluate based on the diff / dispatch input. Outputs:
   #   - skills: JSON array of selected skill names (drives comment ordering)
@@ -81,6 +106,8 @@ jobs:
     name: Determine matrix
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    needs: preflight
+    if: needs.preflight.outputs.enabled == 'true'
     outputs:
       skills: ${{ steps.select.outputs.skills }}
       legs: ${{ steps.select.outputs.legs }}
@@ -236,6 +263,8 @@ jobs:
     name: Token comparison vs main (advisory)
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    needs: preflight
+    if: needs.preflight.outputs.enabled == 'true'
     continue-on-error: true
     env:
       GITHUB_TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
@@ -311,8 +340,8 @@ jobs:
   # ---------------------------------------------------------------------------
   eval:
     name: "${{ matrix.skill || 'eval' }} / ${{ matrix.model || 'skipped (no skill changes)' }}"
-    needs: prepare
-    if: needs.prepare.outputs.legs != '[]' && needs.prepare.outputs.legs != ''
+    needs: [preflight, prepare]
+    if: needs.preflight.outputs.enabled == 'true' && needs.prepare.outputs.legs != '[]' && needs.prepare.outputs.legs != ''
     runs-on: ubuntu-latest
     timeout-minutes: 25
     # Per-job continue-on-error so a single matrix leg failure doesn't fail
@@ -560,8 +589,8 @@ jobs:
   # ---------------------------------------------------------------------------
   comment:
     name: Post advisory comment on PR
-    needs: [prepare, eval, tokens]
-    if: github.event_name == 'pull_request' && always()
+    needs: [preflight, prepare, eval, tokens]
+    if: github.event_name == 'pull_request' && needs.preflight.outputs.enabled == 'true' && always()
     runs-on: ubuntu-latest
     permissions:
       contents: read
