@@ -25,6 +25,25 @@ Validates the local environment has the CLI tools and auth sessions needed to ru
 | jq | `jq` | 1.6 | JSON parsing in scripts and workflows |
 | git | `git` | any | Version control (usually pre-installed) |
 
+## Reported Command-Not-Found Errors
+
+Before running checks, inspect the user's prompt for explicit missing-command
+reports such as `az: command not found`, `command not found: gh`, or "jq is not
+found". Track any matching binaries (`az`, `gh`, `jq`, `git`) as
+**reported missing tools**.
+
+A reported missing tool is actionable even if this terminal can find it. The
+user may be in a different shell, PATH, dev container, or machine than the
+agent. For each reported missing tool:
+
+- State what this terminal detected separately from what the user reported.
+- Always include install/reinstall or PATH repair guidance for that tool.
+- Always include verification commands, such as `command -v az` and
+  `az --version`.
+- If this terminal finds the tool, explain that the likely issue is
+  shell-specific PATH/configuration drift and recommend reopening the shell or
+  reloading the shell profile after install/PATH changes.
+
 ## Execution Playbook
 
 Run the steps below in order. Present results as a table. Stop at the first blocking failure.
@@ -38,6 +57,7 @@ echo "Platform: $OS / $ARCH"
 ```
 
 Map the result for install instructions:
+
 - `Darwin` → macOS
 - `Linux` → Linux (check for `apt-get` vs `yum`/`dnf` to narrow distro)
 - `MINGW*` / `MSYS*` → Windows (git-bash)
@@ -91,11 +111,15 @@ Show a table with pass/fail status:
 
 Mark a tool ❌ if it is missing OR below the minimum version.
 
-### Step 4: Show Install Commands (only if something is missing)
+### Step 4: Show Install Commands and PATH Repair Guidance
 
-Show install commands only for missing or outdated tools, matching the detected platform.
+Show install commands for any tool that is missing, outdated, or reported by
+the user as "command not found", matching the detected platform. If a reported
+tool is present in this terminal, frame the guidance as reinstall/PATH repair
+rather than claiming the user's report was wrong.
 
 **macOS (Homebrew):**
+
 ```bash
 brew install azure-cli   # az
 brew install gh           # GitHub CLI
@@ -104,6 +128,7 @@ brew install git          # git (if missing)
 ```
 
 **Ubuntu / Debian:**
+
 ```bash
 # az — Microsoft repository
 curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
@@ -122,6 +147,7 @@ sudo apt-get install -y jq
 ```
 
 **RHEL / Fedora:**
+
 ```bash
 # az
 sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
@@ -135,6 +161,7 @@ sudo dnf install -y jq
 ```
 
 **Windows (PowerShell with winget):**
+
 ```powershell
 winget install Microsoft.AzureCLI
 winget install GitHub.cli
@@ -142,6 +169,19 @@ winget install jqlang.jq
 ```
 
 > **Windows note:** Git-Ape skills require a BASH shell. Install [Git for Windows](https://gitforwindows.org/) and use git-bash.
+
+**PATH verification and shell refresh (all platforms):**
+
+```bash
+command -v az && az --version
+command -v gh && gh --version
+command -v jq && jq --version
+command -v git && git --version
+```
+
+If a command is installed but still not found in the user's shell, close and
+reopen the terminal, then reload the shell profile (`source ~/.bashrc`,
+`source ~/.zshrc`, or equivalent) and run the verification commands again.
 
 ### Step 5: Check Auth Sessions
 
@@ -167,11 +207,13 @@ Present a final verdict:
 
 - **✅ READY** — All tools installed, versions OK, auth sessions active. Proceed with any Git-Ape skill.
 - **⚠️ TOOLS MISSING** — List what to install. Do not proceed until resolved.
+- **⚠️ REPORTED COMMAND NOT FOUND** — This terminal can find the tool, but the user's shell reported it missing. Provide install/PATH repair guidance and verification commands before proceeding.
 - **⚠️ AUTH MISSING** — Tools OK but user needs to run `az login` and/or `gh auth login`.
 
 ## Agent Behavior
 
 1. Run Steps 1–5 by executing the commands in the terminal.
 2. Present the results table and install commands (if needed).
-3. Do NOT install anything automatically — show the commands and let the user run them.
-4. If everything passes, tell the user they're ready and suggest next steps (e.g., `/git-ape-onboarding`).
+3. If the user reported "command not found", do NOT omit install/PATH guidance just because this terminal finds the tool.
+4. Do NOT install anything automatically — show the commands and let the user run them.
+5. If everything passes and no command-not-found issue was reported, tell the user they're ready and suggest next steps (e.g., `/git-ape-onboarding`).
