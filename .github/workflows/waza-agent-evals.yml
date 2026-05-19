@@ -77,12 +77,23 @@ jobs:
         env:
           TOKEN: ${{ secrets.COPILOT_GITHUB_TOKEN }}
         run: |
-          if [ -n "${TOKEN:-}" ]; then
-            echo "enabled=true" >> "$GITHUB_OUTPUT"
-            echo "COPILOT_GITHUB_TOKEN is set — eval jobs will run."
-          else
+          if [ -z "${TOKEN:-}" ]; then
             echo "enabled=false" >> "$GITHUB_OUTPUT"
             echo "::notice::COPILOT_GITHUB_TOKEN secret is not set. Skipping all waza agent eval jobs. See repo README / PR #109 for setup."
+            exit 0
+          fi
+          # Token is set — verify it can actually read the private microsoft/waza
+          # repo (release downloads need access). Reject silently if 401/403/404.
+          http_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/microsoft/waza/releases/latest || true)
+          if [ "${http_code}" = "200" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "COPILOT_GITHUB_TOKEN can read microsoft/waza — eval jobs will run."
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::COPILOT_GITHUB_TOKEN cannot read microsoft/waza (HTTP ${http_code}). Skipping all waza agent eval jobs."
           fi
 
   # ---------------------------------------------------------------------------
