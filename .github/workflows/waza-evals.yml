@@ -775,7 +775,18 @@ jobs:
                 const c = readArtifact(cp, '');
                 if (c) { checkBody = '```\n' + c + '\n```'; break; }
               }
-              const checkSection = maybeCollapse('✅ Check (compliance summary)', checkBody);
+              // `waza check` expects `eval.yaml` colocated with `SKILL.md`. This
+              // repo separates them (`.github/skills/<name>/SKILL.md` vs
+              // `.github/evals/<name>/eval.yaml`), so the "Evaluation Suite:
+              // Not Found" line is a false negative — the eval actually ran
+              // (see the "Score" section above). Prepend a note so reviewers
+              // are not misled.
+              const checkNote =
+                '> ℹ️ **`waza check` expects `eval.yaml` colocated with `SKILL.md`.** ' +
+                'This repo separates them into `.github/evals/' + skill + '/eval.yaml`, ' +
+                'so the "Evaluation Suite: Not Found" line below is a false negative — ' +
+                'the eval actually ran (see the **Score** section above).\n\n';
+              const checkSection = maybeCollapse('✅ Check (compliance summary)', checkNote + checkBody);
 
               sections.push([
                 '### Skill: `' + skill + '`',
