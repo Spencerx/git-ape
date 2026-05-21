@@ -28,6 +28,7 @@ Values above `3` are clamped to bound premium-request cost.
 This prompt is **interactive**. The protocol always pauses before
 editing.
 
+
 ## Inputs
 
 * `${input:agentName}`: (Required) Bare agent name (e.g.
@@ -160,7 +161,23 @@ see the synthesis in step 5b):
 
 #### Step 5b — Propose edits
 
-Produce a numbered list of **3 to 7** concrete, actionable edits to
+First, print an **actionability surface** preamble in one block,
+derived from the `mutable-by-*` tag on each task in
+`.github/evals/agents/${agent}/tasks/*.yaml`:
+
+```text
+Actionability surface (from task `mutable-by-*` tags):
+  mutable-by-agent       : <count>  ← edits to .agent.md can move these
+  mutable-by-skill       : <count>  ← only SKILL.md edits move these (out of scope here)
+  mutable-by-eval-grader : <count>  ← locked; only task YAML edits move these
+  (no mutable-by-* tag)  : <count>  ← unknown; treat as mutable-by-agent until tagged
+```
+
+The ceiling for this loop is `(mutable-by-agent + unknown) / total`.
+If that ceiling is <50%, warn the user explicitly: "Most tasks are
+locked or skill-driven; expect a small delta."
+
+Then produce a numbered list of **3 to 7** concrete, actionable edits to
 `.github/agents/${agent}.agent.md`. Each item has:
 
 * **Index** — sequential within this iteration, starts at 1.
@@ -191,11 +208,19 @@ After the list, ask the user a single question. The options vary by
 iteration:
 
 * **If `maxIter == 1` or this is the final iteration:**
-  > Reply with the indices to apply (e.g. `1, 3, 5`), `all`, or `skip`.
+  > Reply with the indices to apply (e.g. `1, 3, 5`), `all`, `skip`,
+  > or `add: <freeform edit you want included>`.
 * **If more iterations remain (`i < maxIter`):**
   > Reply with the indices to apply (e.g. `1, 3, 5`), `all`, `skip`,
-  > or `stop` to end the loop now.
+  > `add: <freeform edit you want included>`, or `stop` to end the
+  > loop now.
 
+`add:` is a first-class option — use it when you've spotted a needed
+edit the auditor missed (e.g. a production-UI regression, a phrase the
+grader requires that's about to be removed). The freeform text is
+treated as a new proposed edit; it goes through the same apply step.
+You may combine `add:` with indices, e.g.
+`1, 3, add: restore one-at-a-time vscode_askQuestions in First-turn`.
 #### Step 5c — Apply approved edits
 
 On user response:
@@ -204,12 +229,59 @@ On user response:
   exit the loop, jump to step 6.
 * `skip` — record `applied[${i}] = []`, continue to iteration `i + 1`
   (or exit if `i == maxIter`).
-* `all` or a list of indices — apply the corresponding edits to
-  `.github/agents/${agent}.agent.md` exclusively (never the eval-dir
-  copy, eval.yaml, tasks, or fixtures). Use `edit` tool calls; never
-  shell `sed`/`awk`. Record applied indices.
+* `all`, a list of indices, and/or `add: <text>` — apply the
+  corresponding edits to `.github/agents/${agent}.agent.md` exclusively
+  (never the eval-dir copy, eval.yaml, tasks, or fixtures). For each
+  `add:` entry, treat the freeform text as an additional edit
+  description and apply it the same way. Use `edit` tool calls; never
+  shell `sed`/`awk`. Record applied indices plus any `add:` entries
+  (label them `add-<n>` in the iteration log).
 
-After applying, increment `i`. If `i > maxIter`, exit the loop with
+After applying, run **Step 5d** (grader-literal lint) before
+incrementing the iteration counter.
+
+#### Step 5d — Grader-literal lint (post-edit, pre-rerun)
+
+This catches the most common regression: an edit removes a literal
+string that a per-task `answer_quality` or `clean_refusal` grader
+requires the agent's response to contain. Without this check, the
+regression is only visible after a full eval re-run.
+
+1. For each task in `.github/evals/agents/${agent}/tasks/*.yaml`,
+   read the `graders[].config.prompt` field of every `type: prompt`
+   grader.
+2. Extract the **literal strings** the grader requires the agent to
+   contain. Heuristic:
+   * Strings in the grader prompt that appear inside double quotes,
+     single quotes, or backticks AND are referenced by PASS criteria
+     using verbs like "names", "mentions", "identifies", "includes",
+     "contains", or "says".
+   * Filter out judge tooling literals: `set_waza_grade_pass`,
+     `set_waza_grade_fail`, `continue_session`, and the literal
+     strings `PASS`/`FAIL` themselves.
+3. For each extracted literal, grep the **post-edit**
+   `.github/agents/${agent}.agent.md` (case-insensitive, fixed-string).
+4. Compare against the **pre-edit** version (use `git show
+   HEAD:.github/agents/${agent}.agent.md` if uncommitted, otherwise
+   the prior iteration's snapshot).
+5. Print one of these outcomes:
+   * ✅ `lint clean` — no required literals removed.
+   * ⚠️ `lint warning` — list each removed literal with the task that
+     requires it and the criterion number. Then ask:
+     > These edits removed strings the grader requires. Re-add them
+     > to the agent file, revert the offending edit, or proceed
+     > anyway? (`re-add` / `revert` / `proceed`).
+     * `re-add` — insert each missing literal back into the closest
+       semantically appropriate section (use `edit` calls) and re-run
+       the lint.
+     * `revert` — undo the offending edit(s) only, keep other applied
+       edits, re-run the lint.
+     * `proceed` — continue with the regression. Record in the
+       summary as `⚠️ known regression: <literal> removed`.
+
+This step uses no premium requests. It runs in pure local context.
+
+After the lint, increment `i`. If `i > maxIter`, exit the loop with
 stop reason `max iterations`.
 
 ### Step 6 — Re-sync and verify (skip in audit-only mode, skip if no edits applied)
@@ -260,13 +332,23 @@ step silently when `rescoreQuality` is `false`.
 
 Print a Markdown summary table with:
 
-| Metric | Before | After | Δ |
-|---|---|---|---|
-| Overall score | … | … | … |
-| Per-task: <name> | … | … | … |
-| `agent_tools_implicit` fired | yes/no | yes/no | — |
-| Agent file tokens | … | … | … |
-| Quality (clarity / completeness / trigger-precision / scope / anti-patterns) | … | … | … |
+| Metric | Before | After | Δ | Locked? |
+|---|---|---|---|---|
+| Overall score | … | … | … | — |
+| Per-task: <name> | … | … | … | yes/no |
+| `agent_tools_implicit` fired | yes/no | yes/no | — | — |
+| Agent file tokens | … | … | … | — |
+| Quality (clarity / completeness / trigger-precision / scope / anti-patterns) | … | … | — | — |
+
+The **Locked?** column populates from the task's `mutable-by-*` tag:
+`yes` when the tag is `mutable-by-skill` or `mutable-by-eval-grader`
+(the agent file cannot move this score); `no` when the tag is
+`mutable-by-agent` or absent. The Overall, tool-fired, tokens, and
+Quality rows show `—` (not applicable).
+
+If the lint step (5d) recorded any `known regression`, append a
+⚠️ line below the table summarizing them (one bullet per literal,
+with the task name).
 
 The Quality row populates with real before/after numbers **only when
 `rescoreQuality=true`**. Otherwise show the baseline column from step
@@ -284,9 +366,14 @@ If `maxIter > 1`, also print a per-iteration breakdown:
 Then a "Verdict" paragraph using one of these labels:
 
 * `IMPROVED` — overall score increased AND no negative-task score
-  increased AND no positive-task score decreased.
+  increased AND no positive-task score decreased AND no locked-task
+  (`mutable-by-skill` / `mutable-by-eval-grader`) score increased.
+  A locked-task score moving on agent-file edits alone is suspicious
+  — either the tag is wrong or the test is noisy. Demote to `MIXED`
+  and call it out.
 * `MIXED` — overall score increased BUT at least one of: negative-task
-  score went up, positive-task score went down.
+  score went up, positive-task score went down, a locked-task score
+  moved, or the lint step (5d) recorded a `known regression`.
 * `REGRESSED` — overall score decreased.
 * `NO CHANGE` — overall delta is zero.
 * `AUDIT ONLY` — no eval present; only token + quality numbers shown.
@@ -317,9 +404,12 @@ End with a one-line "Next" suggestion:
   clamped down. This bounds premium-request cost (each round adds an
   LLM proposal turn; with `rescoreQuality=true` it also adds one
   premium request for the final quality re-score).
-* **Refuse to label `IMPROVED`** if a negative-task score increased.
-  Broadening the agent's description to win positives at the cost of
-  negatives is overfitting; surface it instead of hiding it.
+* **Refuse to label `IMPROVED`** if a negative-task score increased
+  OR a locked-task score (`mutable-by-skill` /
+  `mutable-by-eval-grader`) moved. Broadening the agent's description
+  to win positives at the cost of negatives is overfitting; an
+  agent-file edit moving a skill-graded score means the tag is wrong
+  or the run is noisy. Surface both instead of hiding them.
 * **Stay scoped to `.github/agents/${agent}.agent.md`.** Do not edit
   `eval.yaml`, fixtures, tasks, or `.github/agents/` siblings. Eval
   changes belong in a separate manual review.
@@ -374,7 +464,18 @@ End with a one-line "Next" suggestion:
   current state, which is the cheap part. The per-iteration approval
   gate keeps a human in the loop between rounds.
 * **Step 5b numbered approval** — partial-acceptance control without
-  re-prompting per item.
+  re-prompting per item. The `add:` option in step 5b is the
+  user-supplied edit channel — production-UI fixes, grader-required
+  phrases the auditor missed, or any edit the LLM didn't propose.
+  Without it, the only way to inject such edits is to abort the loop
+  and re-invoke, which replays baseline and audits at premium cost.
+* **Step 5d static lint** — catches the most common regression class
+  (an edit removes a literal string the grader requires) BEFORE the
+  ~90s/premium-request eval re-run. The lint uses no premium
+  requests; the eval re-run does. Mutability tags (`mutable-by-*` on
+  task `tags:`) drive the actionability preamble in step 5b and the
+  Locked column in step 8 — they prevent the loop from chasing scores
+  that agent-file edits cannot move.
 * **Step 8 verdict labels** — distinguishes the most common failure
   mode (overfitting positives at the cost of negatives) from a real
   improvement.

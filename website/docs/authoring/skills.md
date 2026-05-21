@@ -1,7 +1,7 @@
 ---
 title: "Authoring Skills"
 sidebar_label: "Skills"
-sidebar_position: 2
+sidebar_position: 3
 description: "How to add a new skill: directory layout, SKILL.md frontmatter, structure, and registration."
 ---
 
@@ -18,6 +18,15 @@ $EDITOR .github/skills/"$SKILL"/SKILL.md
 ```
 
 Then write the frontmatter and body following the template below. No further registration is needed — `plugin.json` declares `"skills": ".github/skills/"` and Copilot auto-discovers every subdirectory containing a `SKILL.md`.
+
+> **Optimize your skill from the start.** Don't ship a `SKILL.md` blind — use the prompts listed in [Prompts](./prompts) to evaluate and harden it as you write:
+>
+> - [`/skill-onboard`](./prompts#skill-onboard) — scaffolds `.github/evals/<skill>/` with positive and negative tasks and runs a smoke trial so you see how the skill behaves before you commit it.
+> - [`/skill-bench`](./prompts#skill-bench) — benchmarks the skill across models so you know which ones it works on.
+> - [`/skill-improve`](./prompts#skill-improve) — diagnoses failing tasks and proposes targeted edits to your `SKILL.md`.
+> - [`/skill-promote`](./prompts#skill-promote) — locks the skill in once it's stable.
+>
+> Run `/skill-onboard` as soon as your first draft is readable — even rough drafts surface gaps faster through evals than through re-reads.
 
 ## File layout
 
@@ -142,5 +151,5 @@ Adding the skill file is enough to ship it as a runtime capability. To opt the s
 ## Read next
 
 - [Eval suites](./evals) — score the skill across models
-- [Maintainer prompts](./prompts#skill-improve) — local audit + edit loop
+- [Prompts](./prompts#skill-improve) — local audit + edit loop
 - [Authoring agents](./agents) — wrap the skill in a persona

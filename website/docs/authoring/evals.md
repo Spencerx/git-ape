@@ -1,7 +1,7 @@
 ---
 title: "Eval Suites"
 sidebar_label: "Eval suites"
-sidebar_position: 4
+sidebar_position: 5
 description: "How to scaffold an eval suite for a skill or agent, what each grader scores, and how CI picks it up."
 ---
 
@@ -218,7 +218,7 @@ waza run .github/evals/my-skill/eval.yaml --no-cache
 # Verbose with debug
 waza run .github/evals/my-skill/eval.yaml -v --debug
 
-# Cross-model bench (uses the maintainer prompt)
+# Cross-model bench (uses the bench prompt)
 # In VS Code: /skill-bench skillName=my-skill
 ```
 
@@ -226,6 +226,6 @@ The [`/skill-bench`](./prompts#skill-bench) and [`/agent-bench`](./prompts#agent
 
 ## Read next
 
-- [Maintainer prompts](./prompts) — bench / improve / promote loops
+- [Prompts](./prompts) — onboard / bench / improve / promote loops
 - [Authoring skills](./skills) — what an evaluable skill looks like
 - [Authoring agents](./agents) — agent surface specifics

@@ -1,21 +1,22 @@
 ---
-title: "Maintainer Prompts"
-sidebar_label: "Maintainer prompts"
-sidebar_position: 5
-description: "The onboard / bench / improve / promote prompts maintainers use to scaffold and evolve skills and agents."
+title: "Prompts"
+sidebar_label: "Prompts"
+sidebar_position: 6
+description: "The onboard / bench / improve / promote prompts you use to scaffold, evaluate, and harden your skills and agents from creation onward."
 ---
 
-# Maintainer Prompts
+# Prompts
 
-Prompts are short, parametric commands shipped under [`.github/prompts/`](https://github.com/Azure/git-ape/tree/main/.github/prompts) that wrap common maintainer workflows: scaffolding new eval suites, cross-model benchmarking, iterative quality improvement, and readiness assessment for promotion.
+Prompts are short, parametric commands shipped under [`.github/prompts/`](https://github.com/Azure/git-ape/tree/main/.github/prompts) that wrap the authoring loop: scaffolding eval suites at creation, cross-model benchmarking, iterative quality improvement, and readiness assessment for promotion.
 
-They are **maintainer-only** — not surfaced to end users — and exist to keep the onboard / bench / improve / promote loop reproducible.
+**Use them while authoring, not after.** They exist so that every skill and agent you write is grounded in measurable evals from the first commit. Drafting a `SKILL.md` or `.agent.md` without running `/skill-onboard` or `/agent-onboard` is shipping blind — the prompts are how you turn a rough draft into something a model can reliably execute.
 
 ## When to use which
 
 | Goal | Prompt |
 |------|--------|
 | "This skill has no eval suite yet — scaffold one." | [`/skill-onboard`](#skill-onboard) |
+| "This agent has no eval suite yet — scaffold one." | [`/agent-onboard`](#agent-onboard) |
 | "Which model handles this skill best?" | [`/skill-bench`](#skill-bench) |
 | "Which model handles this agent best?" | [`/agent-bench`](#agent-bench) |
 | "This skill scored low — help me fix it." | [`/skill-improve`](#skill-improve) |
@@ -59,6 +60,22 @@ The `agent: 'agent'` value pins execution to VS Code's generic chat agent (no sp
 **Cost.** ≈ 5–8 premium requests per invocation: 1 for the `waza suggest --apply` scaffold + `1 × len(tasks)` for the smoke trial (default 4) plus per-task LLM-judge calls.
 
 **Use when.** You've authored or refactored a `SKILL.md` that has no companion eval suite and you want a guarded path from zero to a working `expanded`-tier entry without hand-writing every task YAML.
+
+## agent-onboard
+
+**Description.** Stage 0 of the agent eval lifecycle — bootstrap a brand-new eval suite for a custom agent that currently has no evaluation. Scaffolds `.github/evals/agents/<agent>/` with `eval.yaml`, a mirror copy of the `.agent.md` (waza walks the directory under `skill_directories: ["."]`), positive and negative tasks, and an off-topic task with a `clean_refusal` grader that asserts the agent identifies itself and redirects to its specialty. Runs a single-model smoke trial. No edits to the canonical `.agent.md` or to `manifest.yaml` (agent evals are auto-discovered from the filesystem).
+
+**Arguments.** `[agentName=...] [positiveTasks={2|3|4}] [negativeTasks={1|2}] [smokeModel=claude-sonnet-4.6]`
+
+**Interactivity.** **Interactive.** Pauses for approval before writing the eval directory and before running the smoke trial.
+
+**Output.** A new `.github/evals/agents/<agent>/` directory with `eval.yaml`, a mirrored `<agent>.agent.md`, positive tasks (hybrid `trigger` + `answer_quality` graders), a trigger-only negative task, and an off-topic refusal task. The smoke trial prints per-task pass / fail and an aggregate score.
+
+**Out of scope.** Does **not** edit the canonical `.github/agents/<agent>.agent.md` (use [`/agent-improve`](#agent-improve) for that), does **not** run readiness checks (use [`/agent-promote`](#agent-promote) after the agent has matured), and does **not** touch `manifest.yaml`.
+
+**Cost.** ≈ 6–9 premium requests per invocation: `1 × len(tasks)` for the smoke trial (default 4) plus per-task LLM-judge calls.
+
+**Use when.** You've authored or refactored an `.agent.md` that has no companion eval suite and you want a guarded path from zero to a working agent eval directory.
 
 ## skill-bench
 

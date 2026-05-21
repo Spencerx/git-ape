@@ -1,7 +1,7 @@
 ---
 title: "Authoring Agents"
 sidebar_label: "Agents"
-sidebar_position: 3
+sidebar_position: 4
 description: "How to add a new agent: persona, tools allowlist, sub-agent wiring, and the dual tool taxonomy."
 ---
 
@@ -19,6 +19,15 @@ $EDITOR .github/agents/"$AGENT".agent.md
 ```
 
 No further registration is needed — `plugin.json` declares `"agents": ".github/agents/"` and Copilot auto-discovers every `*.agent.md` file in that directory.
+
+> **Optimize your agent from the start.** Don't ship an `.agent.md` blind — use the prompts listed in [Prompts](./prompts) to evaluate and harden it as you write:
+>
+> - [`/agent-onboard`](./prompts#agent-onboard) — scaffolds `.github/evals/agents/<agent>/` with positive tasks, negative tasks, and an off-topic persona-lock check, then runs a smoke trial so you can watch your tool allowlist, refusals, and orchestration in action.
+> - [`/agent-bench`](./prompts#agent-bench) — benchmarks the agent across models so you know which ones honor the persona.
+> - [`/agent-improve`](./prompts#agent-improve) — diagnoses failing tasks (leaked persona, wrong tool, missed skill) and proposes targeted edits to your `.agent.md`.
+> - [`/agent-promote`](./prompts#agent-promote) — locks the agent in once it's stable.
+>
+> Run `/agent-onboard` as soon as your first draft is readable. Agent evals are auto-discovered from the filesystem; no manifest edit is required.
 
 ## File template
 
@@ -170,5 +179,5 @@ waza run .github/evals/agents/my-new-agent/eval.yaml -v
 ## Read next
 
 - [Eval suites](./evals) — score the agent across models
-- [Maintainer prompts](./prompts#agent-improve) — local audit + edit loop
+- [Prompts](./prompts#agent-improve) — local audit + edit loop
 - [Authoring skills](./skills) — the runbooks agents delegate to

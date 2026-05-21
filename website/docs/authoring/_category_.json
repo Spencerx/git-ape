@@ -3,7 +3,7 @@
   "position": 7,
   "link": {
     "type": "generated-index",
-    "description": "Add, evolve, and ship skills, agents, eval suites, and maintainer prompts in Git-Ape."
+    "description": "Add, evolve, and ship skills, agents, eval suites, and the prompts that optimize them in Git-Ape."
   },
   "collapsed": false
 }

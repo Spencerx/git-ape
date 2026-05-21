@@ -76,7 +76,7 @@ what we want here.)
 
 ### Step 3 — Initial audits (run in parallel, once)
 
-Run all three audits to seed iteration 1. Each writes to a temp file so
+Run all four audits to seed iteration 1. Each writes to a temp file so
 later steps can read them.
 
 ```bash
@@ -283,8 +283,10 @@ End with a one-line "Next" suggestion:
 * **Step 2/5 with `--no-cache`** — the verify step needs a real
   execution; without `--no-cache` an unchanged spec returns the cached
   baseline and delta is always 0.
-* **Step 3 in parallel** — the three audits are independent and
-  long-running (`waza dev --copilot` can take 30–60 s).
+* **Step 3 in parallel** — the three audits are independent;
+  `waza dev --copilot` can take 30–60 s while `waza tokens suggest` and
+  `waza quality` finish faster, so backgrounding them costs nothing and
+  gives the synthesis step a complete picture in one shot.
 * **Step 4 loop with fresh `waza dev`** — `waza dev`'s recommendations
   shift between rounds: issues hidden behind round-1 problems only
   surface after the round-1 fix lands. Re-running it is the unique

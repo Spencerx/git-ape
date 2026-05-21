@@ -3,7 +3,8 @@
 id: positive-what-do-i-need
 name: Positive — "What do I need to install?"
 description: Direct phrasing from the SKILL.md "When to use" section.
-tags: [trigger, positive]
+# See positive-command-not-found.yaml for `mutable-by-*` tag semantics.
+tags: [trigger, positive, mutable-by-skill]
 inputs:
   prompt: "What do I need to install before running git-ape onboarding?"
 graders:

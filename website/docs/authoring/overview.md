@@ -17,7 +17,7 @@ Git-Ape is a [GitHub Copilot agent plugin](https://docs.github.com/en/copilot/re
 }
 ```
 
-Everything else — maintainer prompts, eval suites, the CI matrix — supports the contents of those two directories.
+Everything else — prompts, eval suites, the CI matrix — supports the contents of those two directories.
 
 ## Vocabulary
 
@@ -25,7 +25,7 @@ Everything else — maintainer prompts, eval suites, the CI matrix — supports 
 |------|--------------|---------------|---------|
 | **Skill** | `.github/skills/<name>/SKILL.md` | Plugin manifest (`skills:`) | A focused, callable capability with a documented procedure. Invoked by agents or directly with `/<skill-name>`. |
 | **Agent** | `.github/agents/<name>.agent.md` | Plugin manifest (`agents:`) | A persona with a `tools:` allowlist that orchestrates one or more skills to deliver a workflow. Invoked with `@<agent-name>` in Copilot Chat or `/<agent-name>` in the CLI. |
-| **Prompt** | `.github/prompts/<name>.prompt.md` | VS Code Chat prompt picker | A maintainer-only scripted workflow (benchmark, improve, promote). Not shipped to end users. Invoked with `/<prompt-name>`. |
+| **Prompt** | `.github/prompts/<name>.prompt.md` | VS Code Chat prompt picker | A scripted authoring workflow (onboard, benchmark, improve, promote) you run while writing skills and agents. Not shipped to end users. Invoked with `/<prompt-name>`. |
 | **Eval suite** | `.github/evals/<name>/eval.yaml` and `.github/evals/agents/<name>/eval.yaml` | [microsoft/waza](https://github.com/microsoft/waza) | A spec + tasks that score a skill or agent across models. |
 
 ## Repo layout
@@ -41,9 +41,11 @@ Everything else — maintainer prompts, eval suites, the CI matrix — supports 
 │   ├── prereq-check/SKILL.md
 │   └── ...
 ├── prompts/
+│   ├── skill-onboard.prompt.md
 │   ├── skill-bench.prompt.md
 │   ├── skill-improve.prompt.md
 │   ├── skill-promote.prompt.md
+│   ├── agent-onboard.prompt.md
 │   ├── agent-bench.prompt.md
 │   ├── agent-improve.prompt.md
 │   └── agent-promote.prompt.md
@@ -66,7 +68,7 @@ plugin.json                                 # Plugin manifest
 | Wrap a single API or workflow step (cost lookup, policy query, naming rule check) | [Skill](./skills) |
 | Coordinate several skills behind a persona (deployment, advisory, onboarding) | [Agent](./agents) |
 | Score quality of a skill or agent across models | [Eval suite](./evals) |
-| Automate a maintainer workflow (benchmark, edit-and-rescore, ship-readiness check) | Reuse an existing [maintainer prompt](./prompts) — the six shipped today cover the common loops. New prompts are rarely needed. |
+| Scaffold, benchmark, or harden the skill or agent you just wrote | Reuse an existing [prompt](./prompts) — onboard → bench → improve → promote covers the loop. New prompts are rarely needed. |
 
 ## Naming and registration
 
@@ -79,4 +81,4 @@ plugin.json                                 # Plugin manifest
 - [Authoring skills](./skills) — frontmatter, structure, and minimum bar
 - [Authoring agents](./agents) — persona-lock, `tools:` taxonomy, sub-agent wiring
 - [Eval suites](./evals) — what graders score, how tasks are structured
-- [Maintainer prompts](./prompts) — when to run bench, improve, and promote
+- [Prompts](./prompts) — onboard, bench, improve, and promote your skill or agent from creation

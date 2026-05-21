@@ -3,7 +3,8 @@
 id: negative-trigger-template-edit
 name: Negative — Editing an ARM template
 description: Editing template JSON should NOT trigger prereq-check.
-tags: [trigger, negative]
+# See positive-command-not-found.yaml for `mutable-by-*` tag semantics.
+tags: [trigger, negative, mutable-by-skill]
 inputs:
   prompt: "Add a tag block to the storageAccount resource in this ARM template."
 graders:

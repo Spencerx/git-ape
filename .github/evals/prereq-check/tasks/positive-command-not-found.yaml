@@ -3,7 +3,15 @@
 id: positive-command-not-found
 name: Positive — "command not found" failure
 description: Skill should be invoked when CLI tools are missing.
-tags: [trigger, positive]
+# `mutable-by-*` tag declares which artifact must change for this task's
+# score to move. Values:
+#   mutable-by-skill        — score reflects SKILL.md (trigger graders)
+#   mutable-by-agent        — score reflects .agent.md (persona, workflow, identity)
+#   mutable-by-eval-grader  — score is locked by grader/task design; only this YAML can fix it
+# Currently consumed by `/agent-improve` (actionability surface + Locked?
+# column + verdict gate). `/skill-improve` integration is tracked as a
+# follow-up; until it lands, the tag is informational on skill tasks.
+tags: [trigger, positive, mutable-by-skill]
 inputs:
   prompt: "az: command not found — what tools should be installed for Git-Ape skills?"
 graders:

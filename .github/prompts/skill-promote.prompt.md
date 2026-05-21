@@ -109,7 +109,7 @@ For each criterion, print one of:
 
 End with a single decision line:
 
-- `🟢 RECOMMEND PROMOTE: <skill> meets all 6 criteria. Open a PR to remove its exclude entries from waza-evals.yml + waza-trends.yml and bump trials_per_task to 3.`
+- `🟢 RECOMMEND PROMOTE: <skill> meets all 7 criteria. Open a PR to remove its exclude entries from waza-evals.yml + waza-trends.yml and bump trials_per_task to 3.`
 - `🔴 HOLD IN EXPANDED TIER: <skill> failed N criteria — fix and re-assess.`
 
 Do not modify any workflow file or `eval.yaml` from this prompt — promotion

@@ -95,10 +95,7 @@ Read `.github/skills/${skill}/SKILL.md` and extract:
    grader can confirm the skill stays inactive.
 
 Echo the extracted profile so the human can sanity-check before any
-files are written. **Do NOT proceed if `USE FOR:` and `DO NOT USE FOR:`
-are both missing** — that signals the SKILL.md is not yet ready for
-onboarding; redirect the user to [skill-improve](skill-improve.prompt.md)
-first.
+files are written.
 
 ### Step 3 — Scaffold with `waza suggest`
 
@@ -411,8 +408,8 @@ Print a single decision line, then a one-line next-step:
   per-task patch removes both — do not skip it.
 * **No agent files.** This prompt onboards **skills only**. If the user
   passes an agent name (e.g. one of the agents under `.github/agents/`),
-  stop and point them to a future `agent-onboard.prompt.md` (or to the
-  `.agent.md` mirror convention if onboarding a hybrid).
+  stop and point them to [agent-onboard](agent-onboard.prompt.md) (or to
+  the `.agent.md` mirror convention if onboarding a hybrid).
 
 ## Why each step
 
