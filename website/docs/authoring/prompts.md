@@ -2,19 +2,20 @@
 title: "Maintainer Prompts"
 sidebar_label: "Maintainer prompts"
 sidebar_position: 5
-description: "The six bench / improve / promote prompts maintainers use to evolve skills and agents."
+description: "The onboard / bench / improve / promote prompts maintainers use to scaffold and evolve skills and agents."
 ---
 
 # Maintainer Prompts
 
-Prompts are short, parametric commands shipped under [`.github/prompts/`](https://github.com/Azure/git-ape/tree/main/.github/prompts) that wrap common maintainer workflows: cross-model benchmarking, iterative quality improvement, and readiness assessment for promotion.
+Prompts are short, parametric commands shipped under [`.github/prompts/`](https://github.com/Azure/git-ape/tree/main/.github/prompts) that wrap common maintainer workflows: scaffolding new eval suites, cross-model benchmarking, iterative quality improvement, and readiness assessment for promotion.
 
-They are **maintainer-only** — not surfaced to end users — and exist to keep the eval / improve / promote loop reproducible.
+They are **maintainer-only** — not surfaced to end users — and exist to keep the onboard / bench / improve / promote loop reproducible.
 
 ## When to use which
 
 | Goal | Prompt |
 |------|--------|
+| "This skill has no eval suite yet — scaffold one." | [`/skill-onboard`](#skill-onboard) |
 | "Which model handles this skill best?" | [`/skill-bench`](#skill-bench) |
 | "Which model handles this agent best?" | [`/agent-bench`](#agent-bench) |
 | "This skill scored low — help me fix it." | [`/skill-improve`](#skill-improve) |
@@ -42,6 +43,22 @@ typically a sequence of `bash` blocks and decision points.
 ```
 
 The `agent: 'agent'` value pins execution to VS Code's generic chat agent (no specific persona). Add or edit prompt files directly under `.github/prompts/`; no further registration is needed.
+
+## skill-onboard
+
+**Description.** Stage 0 of the eval lifecycle — bootstrap a brand-new eval suite for a skill that currently has none. Scaffolds `eval.yaml` + positive / negative / off-topic task files, patches them to repo conventions (hybrid graders, concrete prompts, schema headers), registers the skill at the `expanded` tier in `manifest.yaml`, and runs a single-model smoke trial to confirm the suite is wired correctly.
+
+**Arguments.** `[skillName=...] [positiveTasks={2|3|4}] [negativeTasks={1|2}] [smokeModel=claude-sonnet-4.6]`
+
+**Interactivity.** **Interactive.** Pauses for approval before appending to `manifest.yaml` and before running the smoke trial.
+
+**Output.** A new `.github/evals/<skill>/` directory containing `eval.yaml`, positive tasks, a trigger-only negative task, and an off-topic refusal task, plus a `{ name: <skill>, tier: expanded }` entry in `manifest.yaml`. The smoke trial prints per-task pass / fail and aggregate score.
+
+**Out of scope.** Does **not** edit `SKILL.md` (use [`/skill-improve`](#skill-improve) for that) and does **not** promote the skill to the `pilot` tier (use [`/skill-promote`](#skill-promote) after the skill has matured in `expanded`).
+
+**Cost.** ≈ 5–8 premium requests per invocation: 1 for the `waza suggest --apply` scaffold + `1 × len(tasks)` for the smoke trial (default 4) plus per-task LLM-judge calls.
+
+**Use when.** You've authored or refactored a `SKILL.md` that has no companion eval suite and you want a guarded path from zero to a working `expanded`-tier entry without hand-writing every task YAML.
 
 ## skill-bench
 
@@ -106,5 +123,5 @@ The `agent: 'agent'` value pins execution to VS Code's generic chat agent (no sp
 ## Read next
 
 - [Eval suites](./evals) — what the prompts actually run
-- [Authoring skills](./skills) — content the improve loop edits
+- [Authoring skills](./skills) — content the improve loop edits and the onboard prompt consumes as-is
 - [Authoring agents](./agents) — agent surface specifics
