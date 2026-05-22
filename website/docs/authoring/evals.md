@@ -39,7 +39,7 @@ skill: my-skill
 version: "0.1"
 
 config:
-  trials_per_task: 1          # Bump to 3 for flake-detection on flagship skills
+  trials_per_task: 2          # 2 = expanded-tier default (flake detection); bump to 3 for pilot/promotion
   timeout_seconds: 60
   parallel: false
   executor: copilot-sdk
@@ -118,7 +118,7 @@ skill: my-agent
 version: "0.1"
 
 config:
-  trials_per_task: 1
+  trials_per_task: 2
   timeout_seconds: 480
   parallel: false
   executor: copilot-sdk

@@ -15,7 +15,7 @@ What it produces:
 
 * `.github/evals/<skill>/eval.yaml`
 * `.github/evals/<skill>/tasks/positive-*.yaml` (default 2)
-* `.github/evals/<skill>/tasks/negative-*.yaml` (default 1)
+* `.github/evals/<skill>/tasks/negative-*.yaml` (default 2)
 * `.github/evals/<skill>/tasks/negative-off-topic.yaml` (one off-topic negative, trigger-grader only)
 * A new `{ name: <skill>, tier: expanded }` entry appended to
   `.github/evals/manifest.yaml`
@@ -33,8 +33,11 @@ the manifest entry and before running the smoke trial.
 
 > **Cost notice:** Step 3 (`waza suggest --apply`) consumes ~1 premium
 > request to author the initial scaffold. Step 6 (smoke trial) consumes
-> `1 × len(tasks)` premium requests (default 4) plus per-task judge calls.
-> Total budget ≈ **5–8 premium requests** per invocation.
+> `trials_per_task × len(tasks)` premium requests (default `2 × 5 = 10`)
+> plus per-task judge calls (one `answer_quality` judge per positive
+> trial). Total budget ≈ **12–16 premium requests** per invocation —
+> larger than a single-trial scaffold but enough to surface obvious
+> flakes during onboarding.
 
 ## Inputs
 
@@ -46,9 +49,12 @@ the manifest entry and before running the smoke trial.
   positive trigger tasks to scaffold. Hard-capped at `4` to bound cost.
   Each positive task gets a hybrid grader pair: `trigger` (heuristic) +
   `answer_quality` (LLM judge, `continue_session: true`).
-* `${input:negativeTasks:1}`: (Optional, defaults to `1`) How many
-  negative trigger tasks to scaffold. Hard-capped at `2`. Negative tasks
-  carry the `trigger` grader only — refusals shouldn't call tools or be
+* `${input:negativeTasks:2}`: (Optional, defaults to `2`) How many
+  negative trigger tasks to scaffold. Hard-capped at `2`. Defaulting to
+  the cap gives every new skill at least two in-domain refusal cases on
+  top of the dedicated off-topic task — single-negative scaffolds tend
+  to under-cover the `DO NOT USE FOR:` boundary. Negative tasks carry
+  the `trigger` grader only — refusals shouldn't call tools or be
   graded on answer quality.
 * `${input:smokeModel:claude-sonnet-4.6}`: (Optional) Model to use for
   the final smoke trial. Default is the cheapest stable model in the
@@ -65,7 +71,7 @@ onboarding.
 
 1. Set `skill="${input:skillName}"`.
 2. Set `nPos = min(4, ${input:positiveTasks:2})`,
-   `nNeg = min(2, ${input:negativeTasks:1})`.
+   `nNeg = min(2, ${input:negativeTasks:2})`.
 3. Verify `.github/skills/${skill}/SKILL.md` exists. If not, stop and
    report the missing path.
 4. **Refuse to overwrite.** If `.github/evals/${skill}/` already exists,
@@ -137,7 +143,9 @@ Apply ALL of the following edits to the staged files before they leave
 2. `config:` block must include:
    ```yaml
    config:
-     trials_per_task: 1
+     # 2 trials catches the obvious LLM nondeterminism flakes (single trial
+     # = no flake signal). Pilot tier bumps to 3 via /skill-promote.
+     trials_per_task: 2
      timeout_seconds: 60
      parallel: false
      executor: copilot-sdk
@@ -368,7 +376,7 @@ Print a single decision line, then a one-line next-step:
 
 * **All tasks scored, no errors:**
   `🟢 ONBOARDED: <skill> registered at expanded tier. Smoke trial scored <X.XX>.`
-  Next: `Run /skill-bench ${skill} to benchmark across the expanded tier (2 models, ~6 premium requests).`
+  Next: `Run /skill-bench ${skill} to benchmark across the expanded tier (2 models, ~20 premium requests at trials=2).`
 
 * **Some tasks scored 0.0 cleanly (model failed criteria):**
   `🟡 ONBOARDED with weak signal: <skill> registered at expanded tier but smoke scored <X.XX>. Inspect failing tasks.`

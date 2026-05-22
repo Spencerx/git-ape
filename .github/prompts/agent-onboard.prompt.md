@@ -19,7 +19,7 @@ What it produces:
   canonical `.github/agents/<agent>.agent.md` (NOT a symlink — waza walks
   the dir under `skill_directories: ["."]`)
 * `.github/evals/agents/<agent>/tasks/positive-*.yaml` (default 2)
-* `.github/evals/agents/<agent>/tasks/negative-*.yaml` (default 1)
+* `.github/evals/agents/<agent>/tasks/negative-*.yaml` (default 2)
 * `.github/evals/agents/<agent>/tasks/negative-off-topic.yaml` — one
   off-topic task with a `clean_refusal` grader that asserts the agent
   identifies itself and redirects to its specialty
@@ -43,11 +43,11 @@ This is **interactive**. The protocol pauses for approval before
 writing the eval directory and before running the smoke trial.
 
 > **Cost notice:** Step 6 (smoke trial) consumes
-> `1 × len(tasks)` premium requests (default 4 tasks) plus per-task
-> judge calls — 1 for each positive's `answer_quality`, 1 for the
-> off-topic task's `clean_refusal`. Total budget ≈ **6–9 premium
-> requests** per invocation. Step 3's scaffold authoring is local (no
-> `waza suggest` — see Step 3 for why).
+> `trials_per_task × len(tasks)` premium requests (default `2 × 5 = 10`)
+> plus per-task judge calls — one `answer_quality` per positive trial,
+> one `clean_refusal` per off-topic trial. Total budget ≈ **14–18
+> premium requests** per invocation. Step 3's scaffold authoring is
+> local (no `waza suggest` — see Step 3 for why).
 
 ## Inputs
 
@@ -59,10 +59,14 @@ writing the eval directory and before running the smoke trial.
   positive in-scope tasks to scaffold. Hard-capped at `4` to bound cost.
   Each positive task gets a hybrid grader pair: `trigger` (heuristic) +
   `answer_quality` (LLM judge, `continue_session: true`).
-* `${input:negativeTasks:1}`: (Optional, defaults to `1`) How many
-  adjacent-domain negative tasks to scaffold. Hard-capped at `2`. The
-  off-topic task is authored separately (Step 4) and does not count
-  against this budget. Negative tasks carry the `trigger` grader only.
+* `${input:negativeTasks:2}`: (Optional, defaults to `2`) How many
+  adjacent-domain negative tasks to scaffold. Hard-capped at `2`.
+  Defaulting to the cap ensures every new agent gets two in-domain
+  refusal cases on top of the dedicated off-topic task (Step 4) —
+  single-negative scaffolds tend to under-cover the `## Non-goals`
+  boundary. The off-topic task is authored separately (Step 4) and
+  does not count against this budget. Negative tasks carry the
+  `trigger` grader only.
 * `${input:smokeModel:claude-sonnet-4.6}`: (Optional) Model to use for
   the final smoke trial. Default is the cheapest stable pilot-tier
   model; override only if the agent is model-sensitive.
@@ -78,7 +82,7 @@ onboarding.
 
 1. Set `agent="${input:agentName}"`.
 2. Set `nPos = min(4, ${input:positiveTasks:2})`,
-   `nNeg = min(2, ${input:negativeTasks:1})`.
+   `nNeg = min(2, ${input:negativeTasks:2})`.
 3. Verify `.github/agents/${agent}.agent.md` exists. If not, stop and
    report the missing path. (Common slip: passing
    `azure-policy-advisor.agent.md` instead of `azure-policy-advisor` —
@@ -171,7 +175,9 @@ description: <one-line description from Step 2's ## Mission extraction>
 version: "0.1"
 
 config:
-  trials_per_task: 1
+  # 2 trials catches the obvious LLM nondeterminism flakes (single trial
+  # = no flake signal). Pilot tier bumps to 3 via /agent-promote.
+  trials_per_task: 2
   timeout_seconds: 60
   parallel: false
   executor: copilot-sdk
@@ -475,7 +481,7 @@ Print a single decision line, then a one-line next-step:
 
 * **All tasks scored, no errors, `agent_tools_implicit` fired everywhere:**
   `🟢 ONBOARDED: <agent> eval suite created. Smoke trial scored <X.XX>.`
-  Next: `Run /agent-bench ${agent} to benchmark across pilot-tier models (4 models, ~12 premium requests).`
+  Next: `Run /agent-bench ${agent} to benchmark across pilot-tier models (4 models, ~40 premium requests at trials=2).`
 
 * **Some tasks scored 0.0 cleanly (model failed criteria, persona-lock leak common on off-topic):**
   `🟡 ONBOARDED with weak signal: <agent> eval suite created but smoke scored <X.XX>. Inspect failing tasks.`
