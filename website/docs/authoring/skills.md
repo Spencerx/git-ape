@@ -44,49 +44,89 @@ The directory name **must** match the `name:` field in frontmatter.
 ```markdown
 ---
 name: my-new-skill
-description: "One sentence describing what the skill does and when it should fire. Used by the trigger router."
+description: "One sentence describing what the skill does and when it should fire. WHEN: trigger phrase 1, trigger phrase 2, trigger phrase 3. DO NOT USE FOR: scope boundary 1, scope boundary 2."
 argument-hint: "Free-text hint shown to users when they invoke the skill"
 user-invocable: true
+license: MIT
+metadata:
+  author: Git-Ape
+  version: "1.0.0"
 ---
 
 # Display Title
 
 One paragraph describing what the skill does and the value it delivers.
 
+## Quick Reference
+
+| Property | Value |
+|----------|-------|
+| Best for | One-line summary of the primary use case |
+| MCP tools | Tool names, or `None — runs locally via shell` |
+| CLI | Primary commands, e.g. `az policy assignment list` |
+| Related skills | Sibling skills to call before/after |
+| Side effects | `Read-only`, or list what gets created / modified |
+
 ## When to Use
 
-- Bullet describing trigger condition 1
+- Bullet describing trigger condition 1 (user's voice)
 - Bullet describing trigger condition 2
 - Bullet describing trigger condition 3
 
-## Inputs
+## Rules
 
-- `argument-1`: what it is and whether required
-- `argument-2`: what it is and whether required
+1. Numbered, blocking constraints the agent must follow.
+2. Use `⛔` or `❌` prefixes for hard rules and reference them later when steps depend on them.
 
-## Execution Playbook
+## Steps
 
-Run the steps below in order. Stop at the first blocking failure.
+| # | Action | Reference |
+|---|--------|-----------|
+| 1 | **Verify Prerequisites** — what to check first | inline |
+| 2 | **Do the Thing** — short imperative | [references/foo.md](references/foo.md) |
+| 3 | **Report Results** — produce the output contract | See [Outputs](#outputs) |
 
-### Step 1 — Verify prerequisites
+### Step 1: Verify Prerequisites
 
 ```bash
 command -v az >/dev/null || { echo "az not found"; exit 1; }
 ```
 
-### Step 2 — Do the thing
+### Step 2: Do the Thing
 
-Describe the action. Use fenced code blocks for any shell or API calls so they
-can be reused verbatim.
+Describe the action. Use fenced code blocks for any shell or API calls so they can be reused verbatim. Push long examples into `references/*.md` to stay under the token budget.
 
-### Step 3 — Report results
+### Step 3: Report Results
 
-Describe the output format. Where possible, show a sample table or JSON shape.
+Link to the **Outputs** section.
 
-## Output Format
+## Outputs
 
-Show the literal structure the skill is contracted to produce. Skills are
-graded on producing this output, so make it concrete.
+Show the literal structure the skill is contracted to produce — table, JSON shape, or file path. Eval graders score against this contract, so make it concrete.
+
+## Error Handling
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `<exact error text>` | Why it happens | What to run |
+
+## Constraints
+
+**Always:**
+
+- ✅ Concrete do-this behavior
+
+**Never:**
+
+- ❌ Concrete don't-do-this behavior
+
+## Next
+
+What the user (or agent) should invoke after a successful run. Use a clickable chip:
+
+> Next: **@Some Agent** — or run `/some-skill` to continue.
+
+`@AgentName` and `/skill-name` render as clickable chips in VS Code Copilot Chat.
 ```
 
 ## Frontmatter reference
@@ -94,19 +134,31 @@ graded on producing this output, so make it concrete.
 | Field | Required | Purpose |
 |-------|:--------:|---------|
 | `name` | ✅ | Kebab-case skill identifier. Must match directory name. |
-| `description` | ✅ | One sentence used by the Copilot router to decide when to trigger the skill. Specific verbs and nouns matter — vague descriptions hurt trigger precision. |
+| `description` | ✅ | Used by the Copilot router. Encode trigger phrases with `USE FOR:` and scope boundaries with `DO NOT USE FOR:` — specific verbs and nouns improve routing precision. (`WHEN:` is also accepted but `USE FOR:` matches the wider skill ecosystem.) |
 | `argument-hint` | ⚪ | Free-text hint displayed in the prompt picker. |
 | `user-invocable` | ⚪ | Defaults to `true`. Set `false` for skills that only run as a sub-step of an agent and should not be surfaced standalone. |
+| `license` | ⚪ | Recommended `MIT` for skills shipped with this repo — keeps redistribution rights explicit. |
+| `metadata.author` | ⚪ | Free-text author or team name (e.g. `Git-Ape`, `Microsoft`). |
+| `metadata.version` | ⚪ | Semver string. Bump on every behavior change — eval suites and CI can pin to a version. |
 
 ## Anatomy of a good skill
 
-Look at [`prereq-check/SKILL.md`](https://github.com/Azure/git-ape/blob/main/.github/skills/prereq-check/SKILL.md) for a reference. It demonstrates the patterns Git-Ape skills follow:
+Look at [`prereq-check/SKILL.md`](https://github.com/Azure/git-ape/blob/main/.github/skills/prereq-check/SKILL.md) for the canonical reference. The twelve principles below are the patterns Git-Ape skills follow — they are distilled from the Microsoft `azure-skills` package and apply to every skill in `.github/skills/`.
 
-1. **Crisp `description:`** — the router uses this text to decide whether to fire. Mention the verbs and resource types the skill handles.
-2. **`## When to Use`** — three to five concrete trigger conditions written from the user's point of view (`Before first-time onboarding`, `When any Git-Ape skill fails with a "command not found" error`, …). The eval suite's negative tasks will probe the edges.
-3. **`## Execution Playbook`** — numbered steps with verbatim shell or API calls. Each step has one job. Steps reference each other by number when ordering matters.
-4. **Explicit output contract** — what the skill returns (table, JSON, file). The `behavior` and `prompt` graders score the agent against this contract.
-5. **No persona language** — skills are tools, not characters. Persona-lock belongs in the agent that calls the skill, not in the skill itself.
+### Twelve principles
+
+1. **Frontmatter is metadata, not decoration.** Add `license`, `metadata.author`, and `metadata.version` so skills are versionable and reproducible. Encode trigger boundaries in `description` with `USE FOR:` and `DO NOT USE FOR:` markers — vague descriptions hurt router precision.
+2. **Open with a `## Quick Reference` table.** One scannable block (`Best for`, `MCP tools`, `CLI`, `Related skills`, `Side effects`) before any prose. Cuts time-to-orient for both the model and a human reviewer.
+3. **`## When to Use` is the trigger contract.** Concrete, user-voice bullets. The router and eval graders both grade against this list.
+4. **Hard-block guardrails as callouts.** Use `> **⛔ STOP**` / `> **⚠️ MANDATORY**` blockquotes for non-negotiables; numbered `## Rules` for everything else.
+5. **Steps as a table, body as expansion.** A `# | Action | Reference` table at the top, then per-step detail underneath. Lets the agent skim and dispatch without re-reading the whole body.
+6. **MCP-first, CLI-fallback.** Every Azure-touching skill lists MCP tools in a table with an explicit CLI fallback when MCP is not enabled. Discover before you act — never assume names or schemas.
+7. **Explicit `## Outputs` contract.** What files, tables, or JSON the skill is contracted to produce. Eval graders score against this.
+8. **`## Error Handling` table.** Rows of `Error | Cause | Fix` for the top failure modes. Cheap, high-signal documentation.
+9. **`## Constraints` as Always / Never sections.** Explicit do/don't lists at the bottom catch drift. Use `**Always:**` and `**Never:**` headers — polarity is already conveyed, so do **not** prefix each bullet with ✅/❌ (each emoji costs 1-3 tokens and adds no information). Reserve emoji semantics for *status output* only: ⛔ blocking, ⚠️ warn, ❌ misconfigured, ✅ applied, 🔄 platform default, ❔ unknown.
+10. **Cross-skill chains are explicit — emit a handoff chip.** Document `A → B → C` flows and end with a `## Next` pointer. VS Code Copilot Chat renders `@AgentName` mentions and `/skill-name` slash commands as clickable chips — the closest thing to a button in the chat surface. Always include at least one in `## Next` (e.g. `Next: **@Git-Ape Onboarding** — or run /git-ape-onboarding`) so the user can dispatch the follow-up with one click. Add `⛔ MANDATORY NEXT STEP` when the hand-off is required.
+11. **Push depth into `references/`.** Keep `SKILL.md` close to the 1,300-token budget; long CLI examples, schema tables, and provider-specific patterns belong in `references/*.md` linked from the steps table. Bash one-shots can live in `scripts/`.
+12. **No persona language.** Skills read like runbooks. Persona-lock belongs in the `.agent.md` that calls the skill, not in the skill itself.
 
 ## Token budget
 
