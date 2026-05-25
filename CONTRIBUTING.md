@@ -91,6 +91,28 @@ Agent files live in `.github/agents/` and require:
 - YAML frontmatter with `description` field.
 - A `## Warning` section (experimental disclaimer).
 
+## Adding an Eval Suite
+
+Every skill and agent in this repo can have a companion behavioral eval
+under `.github/evals/`. Evals are scored on PRs via the
+[`waza-evals`](.github/workflows/waza-evals.yml) and
+[`waza-agent-evals`](.github/workflows/waza-agent-evals.yml) workflows.
+
+To scaffold an eval for an existing skill or agent, use the slash
+commands in VS Code (Copilot Chat):
+
+- `/skill-onboard skillName=<name>` — bootstraps `.github/evals/<name>/`
+  and appends a `{ name, tier: expanded }` entry to `manifest.yaml`.
+- `/agent-onboard agentName=<name>` — bootstraps
+  `.github/evals/agents/<name>/`. No `manifest.yaml` edit (agent evals
+  are auto-discovered).
+
+The full lifecycle (`onboard` → `bench` → `improve` → `promote`) and the
+authoring framework are documented under
+[Authoring](https://azure.github.io/git-ape/docs/authoring/) on the docs
+site. Decision rationale for the harness choice lives in
+[`.github/evals/README.md`](.github/evals/README.md).
+
 ## Pull Request Process
 
 1. **Fork and branch** — Create a feature branch from `main`.

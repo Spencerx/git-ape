@@ -33,6 +33,8 @@ Workflows ship as **`*.exampleyml`** files in `.github/workflows/` so they are i
 | [Git-Ape: Verify Setup](./git-ape-verify) | `git-ape-verify.exampleyml` | workflow_dispatch | verify |
 | [Issue Triage Agent](./issue-triage-agent-lock) | `issue-triage-agent.lock.yml` | schedule, workflow_dispatch | activation, agent, conclusion, detection, safe_outputs |
 | [PR Validation](./pr-validation) | `pr-validation.yml` | pull_request | structure-check, markdownlint |
+| [Waza agent evals](./waza-agent-evals) | `waza-agent-evals.yml` | pull_request, workflow_dispatch | preflight, prepare, tokens, eval, comment |
+| [Waza skill evals](./waza-evals) | `waza-evals.yml` | pull_request, workflow_dispatch | preflight, prepare, tokens, eval, comment |
 
 ## Pipeline Architecture
 
