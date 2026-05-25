@@ -234,8 +234,13 @@ if ($StackId) {
             }
         }
     } else {
-        Write-Color 'Stack already gone — skipping stack delete' Yellow
-        $StackDeleted = $true
+        if ($RgName) {
+            Write-Color 'Stack already gone — falling back to resource group delete from state.json' Yellow
+            $StackId = $null
+        } else {
+            Write-Color 'Stack already gone — skipping stack delete' Yellow
+            $StackDeleted = $true
+        }
     }
 }
 
