@@ -77,7 +77,7 @@ fi
 _classify_resource() {
     local RES_ID="$1"
     local RES_TYPE
-    RES_TYPE=$(echo "$RES_ID" | grep -oE 'providers/[^/]+/[^/]+' | head -1 | sed 's|providers/||')
+    RES_TYPE=$(echo "$RES_ID" | grep -oE 'providers/[^/]+/[^/]+' | tail -1 | sed 's|providers/||')
 
     local RES_SCOPE="resourceGroup"
     echo "$RES_ID" | grep -q "/resourceGroups/" || RES_SCOPE="subscription"
