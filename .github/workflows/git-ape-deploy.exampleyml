@@ -388,7 +388,7 @@ jobs:
             done
 
             # Extract resource groups from managed resources
-            RESOURCE_GROUPS=$(echo "$MANAGED_RESOURCES" | jq -c '[.[].id | capture("/resourceGroups/(?<rg>[^/]+)") | .rg] | unique')
+            RESOURCE_GROUPS=$(echo "$MANAGED_RESOURCES" | jq -c '[.[].id | select(test("/resourceGroups/")) | capture("/resourceGroups/(?<rg>[^/]+)") | .rg] | unique')
           else
             # Fallback: walk deployment operations recursively
             OPS=$(az deployment operation sub list \
