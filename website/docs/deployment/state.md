@@ -232,7 +232,9 @@ Contains runtime deployment state populated after `az deployment` or `az stack` 
 
 **Destroy strategy selection:**
 
-1. If `stackId` is present → `az stack sub delete --name <stackId> --action-on-unmanage deleteAll --bypass-stack-out-of-sync-error true`
+1. If `stackId` is present → treat the deployment as stack-managed and delete by stack name: `az stack sub delete --name <deploymentId> --action-on-unmanage deleteAll --bypass-stack-out-of-sync-error true`
+   - `deploymentId` is the Deployment Stack name.
+   - `stackId` is the full ARM resource ID for the stack and should only be used with an ID-based form such as `--ids <stackId>`, not with `--name`.
 2. If `stackId` is null → fallback to state-driven delete using `managedResources[]` and `resourceGroups[]`
 3. If neither field is populated (legacy state) → fall back to single `az group delete` on `resourceGroup`
 
