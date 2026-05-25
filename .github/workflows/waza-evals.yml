@@ -66,11 +66,13 @@ concurrency:
   cancel-in-progress: true
 
 # Pin waza to a known-good release. Bump deliberately after validating that
-# the new version's eval behavior still matches our baselines — `latest`
-# silently breaks runs whenever upstream changes grader semantics or CLI
-# flags (e.g. v0.33 regressed our PR #109 run).
+# the new version's eval behavior still matches our baselines. Never resolve
+# via `latest` — the microsoft/waza repo publishes the core release and the
+# sibling azd-extension release at the same commit, and GitHub's
+# `releases/latest` endpoint returns whichever was published last, which has
+# bitten PR #109 with a 404 on the wrong asset.
 env:
-  WAZA_VERSION: 'v0.31.0'
+  WAZA_VERSION: 'v0.33.0'
 
 # Note: there is no top-level skill list. The canonical list lives in
 # .github/evals/manifest.yaml and is read by the `prepare` job below.
