@@ -223,7 +223,7 @@ Contains runtime deployment state populated after `az deployment` or `az stack` 
 | `managedResources[].id` | `string` | Full ARM resource ID. |
 | `managedResources[].type` | `string` | ARM resource type (e.g., `Microsoft.KeyVault/vaults`). |
 | `managedResources[].scope` | `string` | Scope level: `resourceGroup`, `subscription`, or `managementGroup`. |
-| `managedResources[].apiVersion` | `string` | API version used for the resource. |
+| `managedResources[].apiVersion?` | `string` | Optional API version used for the resource, when captured by the workflow/skill that wrote the state. |
 | `managedResources[].softDeletable` | `boolean` | Whether the resource type supports soft-delete (Key Vault, Cognitive Services, etc.). |
 | `managedResources[].purgeProtected` | `boolean` | Whether the resource has purge protection enabled (cannot be permanently deleted until retention expires). |
 | `resourceGroups` | `array` | All resource groups created/managed by this deployment. |
