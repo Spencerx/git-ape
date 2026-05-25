@@ -232,8 +232,9 @@ if [[ -n "$STACK_ID" ]]; then
             fi
         fi
     else
-        echo -e "${YELLOW}Stack already gone — skipping stack delete${NC}"
-        STACK_DELETED="true"
+        echo -e "${YELLOW}Stack not found for stackId in state.json — falling back to RG/state-driven delete${NC}"
+        STACK_DELETED="false"
+        STACK_ID=""
     fi
 fi
 
