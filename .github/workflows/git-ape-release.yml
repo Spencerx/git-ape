@@ -331,7 +331,7 @@ jobs:
           # shellcheck disable=SC2086
           vsce publish --packagePath "$VSIX_FILE" --no-dependencies $FLAG
 
-      - name: Update CHANGELOG.md on main
+      - name: Bump version files and update CHANGELOG.md on main
         if: steps.ver.outputs.prerelease == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -340,10 +340,28 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Always work against the tip of main so the changelog stays current,
-          # even when this run was triggered by a tag push from an older commit.
+          # Always work against the tip of main so the bump + changelog stay
+          # current, even when this run was triggered by a tag push from an
+          # older commit. (On tag-push the earlier "Commit version bump" step
+          # is skipped, so plugin.json / marketplace.json on main would
+          # otherwise stay at the previous version.)
           git fetch origin main
           git checkout -B changelog-update origin/main
+
+          # Re-apply the version bump against the fresh main tree so the same
+          # commit lands the version-bearing files AND the changelog entry.
+          PLUGIN_JSON="plugin.json"
+          MARKETPLACE_JSON=".github/plugin/marketplace.json"
+          PLUGIN_NAME=$(jq -r '.name' "$PLUGIN_JSON")
+
+          jq --arg v "$VERSION" '.version = $v' "$PLUGIN_JSON" > "$PLUGIN_JSON.tmp"
+          mv "$PLUGIN_JSON.tmp" "$PLUGIN_JSON"
+
+          jq --arg v "$VERSION" --arg name "$PLUGIN_NAME" '
+            .metadata.version = $v
+            | .plugins |= map(if .name == $name then .version = $v else . end)
+          ' "$MARKETPLACE_JSON" > "$MARKETPLACE_JSON.tmp"
+          mv "$MARKETPLACE_JSON.tmp" "$MARKETPLACE_JSON"
 
           DATE=$(date -u +%Y-%m-%d)
 
@@ -386,25 +404,25 @@ jobs:
             } > CHANGELOG.md
           fi
 
-          if git diff --quiet CHANGELOG.md; then
-            echo "CHANGELOG.md unchanged; skipping commit."
+          if git diff --quiet CHANGELOG.md plugin.json .github/plugin/marketplace.json; then
+            echo "No version or changelog drift on main; skipping commit."
             exit 0
           fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md
-          git commit -m "docs(changelog): add entry for $TAG"
+          git add CHANGELOG.md plugin.json .github/plugin/marketplace.json
+          git commit -m "chore(release): bump to $TAG and update changelog"
 
           # Push directly to main. If the push fails (someone else moved main),
-          # fall back to opening a PR so the changelog still lands.
+          # fall back to opening a PR so the bump + changelog still land.
           if ! git push origin HEAD:main; then
             echo "Direct push to main rejected; opening a PR instead."
-            BRANCH="changelog/${TAG}"
+            BRANCH="release/${TAG}"
             git push origin "HEAD:$BRANCH"
             gh pr create \
               --base main \
               --head "$BRANCH" \
-              --title "docs(changelog): add entry for $TAG" \
-              --body "Automated changelog update for [$TAG](https://github.com/${{ github.repository }}/releases/tag/$TAG)."
+              --title "chore(release): bump to $TAG and update changelog" \
+              --body "Automated post-release update for [$TAG](https://github.com/${{ github.repository }}/releases/tag/$TAG): bumps \`plugin.json\` + \`.github/plugin/marketplace.json\` to \`$VERSION\` and appends the changelog entry."
           fi
