@@ -45,7 +45,7 @@ flowchart LR
 
 ## What Git-Ape is
 
-Git-Ape is an **agent + policy** platform-engineering framework for Azure, built on GitHub Copilot. It is an alternative to module-first IaC platforms.
+Git-Ape is an **agent + policy** platform-engineering framework for Azure, built on GitHub Copilot. It is an alternative to module-first IaC platforms, designed to deploy any Azure workload from natural-language intent.
 
 | Module-first platform | Git-Ape (agents + policy) |
 |---|---|

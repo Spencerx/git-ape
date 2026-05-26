@@ -23,6 +23,7 @@ The marketplace manifest configures how Git-Ape appears in the Copilot CLI plugi
 ## Plugins
 
 - **git-ape** v0.0.1: Intelligent Azure deployment agent system for GitHub Copilot. Provides guided, safe, and validated Azure resource deployments using ARM templates, with built-in security analysis, cost estimation, drift detection, and CI/CD pipeline integration.
+- **ape-context** v1.0.0: Extension for git-ape that provides enhanced context management, allowing platform teams to set up a baseline for Engineering context, tools use & intent
 
 ## Full Source
 
@@ -43,6 +44,31 @@ The marketplace manifest configures how Git-Ape appears in the Copilot CLI plugi
       "description": "Intelligent Azure deployment agent system for GitHub Copilot. Provides guided, safe, and validated Azure resource deployments using ARM templates, with built-in security analysis, cost estimation, drift detection, and CI/CD pipeline integration.",
       "version": "0.0.1",
       "source": "."
+    },
+    {
+      "name": "ape-context",
+      "description": "Extension for git-ape that provides enhanced context management, allowing platform teams to set up a baseline for Engineering context, tools use & intent",
+      "version": "1.0.0",
+      "author": {
+        "name": "Suzanne Daniels",
+        "url": "https://suuu.us"
+      },
+      "homepage": "https://github.com/suuus/ape-context",
+      "keywords": [
+        "context",
+        "intent",
+        "infrastructure",
+        "deployment",
+        "documentation",
+        "git-ape"
+      ],
+      "license": "MIT",
+      "repository": "https://github.com/suuus/ape-context",
+      "source": {
+        "source": "github",
+        "repo": "suuus/ape-context",
+        "path": ".github/plugins/ape-context"
+      }
     }
   ]
 }

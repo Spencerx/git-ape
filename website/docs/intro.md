@@ -12,7 +12,7 @@ slug: /intro
 **EXPERIMENTAL PROJECT:** Git-Ape is in active development and is not production-ready. Use it for local development, demos, sandbox subscriptions, and learning only.
 :::
 
-Git-Ape is a **platform engineering framework** built on GitHub Copilot. It provides a structured, multi-agent system for planning, validating, and deploying Azure infrastructure — with security gates, cost analysis, and CI/CD pipeline integration built in.
+Git-Ape is a **platform engineering framework** built on GitHub Copilot. It provides a structured, multi-agent system for planning, validating, and deploying **any Azure workload** — with security gates, cost analysis, and CI/CD pipeline integration built in.
 
 It is the implementation of the thesis Microsoft published in [Platform Engineering for the Agentic AI Era](https://devblogs.microsoft.com/all-things-azure/platform-engineering-for-the-agentic-ai-era/) — agents and policy replacing module catalogues as the platform team's primary deliverable. See the **[Vision & Manifesto](./vision)** for the full thinking.
 
@@ -71,10 +71,18 @@ Git-Ape works in two modes:
 
 ## Quick Start
 
+Visual Studio Code Extension: 
+
+[![Install from VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/Git-ApeTeam.git-ape?label=VS%20Code%20Marketplace&logo=visualstudiocode&logoColor=white&color=007ACC)](https://marketplace.visualstudio.com/items?itemName=Git-ApeTeam.git-ape) [![Install in VS Code](https://img.shields.io/badge/Install-VS_Code-007ACC?logo=visualstudiocode&logoColor=white)](pathname:///install.html) [![Install in VS Code Insiders](https://img.shields.io/badge/Install-VS_Code_Insiders-24bfa5?logo=visualstudiocode&logoColor=white)](pathname:///install-insiders.html)
+
+Or GitHub Copilot CLI:
+
 ```bash
-# Install the plugin
+# Install the plugin (VS Code Marketplace is the one-click route above)
+# Copilot CLI route:
 copilot plugin marketplace add Azure/git-ape
-copilot plugin install Azure/git-ape
+copilot plugin install git-ape@git-ape
+copilot plugin list   # Should show: git-ape@git-ape
 
 # Check prerequisites
 # In Copilot Chat: /prereq-check
@@ -82,6 +90,8 @@ copilot plugin install Azure/git-ape
 # Deploy something
 # In Copilot Chat: @git-ape deploy a Python function app
 ```
+
+See [Installation & Prerequisites](./getting-started/installation) for every install path.
 
 ## Next Steps
 

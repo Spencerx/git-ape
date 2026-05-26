@@ -64,7 +64,6 @@ graph TD
 |----------|---------|
 | Import a resource group | `@azure-iac-exporter export rg-myapp-prod` |
 | Import specific resources | `@azure-iac-exporter export rg-myapp-prod --filter "Microsoft.Web/*"` |
-| Generate only Bicep | `@azure-iac-generator` (after export) |
 
 ## After Import
 

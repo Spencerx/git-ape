@@ -3,11 +3,24 @@
 .azure/*
 !.azure/deployments/
 
+# Extension build artifacts
+extension/package.json
+extension/*.vsix
+extension/.github/
+extension/LICENSE
+extension/APE.png
+node_modules/
 
 # Docusaurus
 website/node_modules/
 website/build/
 website/.docusaurus/
+docs/docusaurus/
 
 # Playwright MCP test artifacts
 .playwright-mcp/
+
+# Waza skill/agent evals (microsoft/waza)
+.waza-cache/
+.waza-results/
+*.waza-results.json

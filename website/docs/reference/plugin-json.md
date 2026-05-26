@@ -1,7 +1,7 @@
 ---
 title: "plugin.json Reference"
 sidebar_label: "plugin.json"
-description: "Git-Ape Copilot CLI plugin manifest"
+description: "Git-Ape plugin manifest (VS Code agent plugin and Copilot CLI plugin)"
 ---
 
 <!-- AUTO-GENERATED — DO NOT EDIT. Source: plugin.json -->
@@ -9,7 +9,7 @@ description: "Git-Ape Copilot CLI plugin manifest"
 
 # plugin.json
 
-The plugin manifest defines the Git-Ape Copilot CLI plugin metadata.
+The plugin manifest defines the Git-Ape plugin metadata. The same manifest is consumed by both the [VS Code agent plugin](https://code.visualstudio.com/docs/copilot/customization/agent-plugins) loader and the [GitHub Copilot CLI plugin](https://docs.github.com/en/copilot/reference/copilot-cli-reference/cli-plugin-reference) loader — no separate config is required.
 
 ## Current Configuration
 
@@ -17,7 +17,7 @@ The plugin manifest defines the Git-Ape Copilot CLI plugin metadata.
 |-------|-------|
 | **Name** | git-ape |
 | **Version** | 0.0.1 |
-| **Description** | Intelligent Azure deployment agent system for GitHub Copilot. Provides guided, safe, and validated Azure resource deployments using ARM templates, with built-in security analysis, cost estimation, and CI/CD pipeline integration. |
+| **Description** | Intelligent agent system for deploying any Azure workload through GitHub Copilot. Provides guided, safe, and validated deployments using ARM templates, with built-in security analysis, cost estimation, and CI/CD pipeline integration. |
 | **Author** | Microsoft |
 | **License** | MIT |
 | **Agents Path** | `.github/agents/` |
@@ -25,14 +25,14 @@ The plugin manifest defines the Git-Ape Copilot CLI plugin metadata.
 
 ## Keywords
 
-`azure` · `cloud` · `infrastructure` · `arm-templates` · `deployment` · `devops` · `iac` · `security` · `cost-estimation` · `github-actions`
+`azure` · `cloud` · `workloads` · `deployment` · `arm-templates` · `devops` · `security` · `cost-estimation` · `github-actions` · `copilot-agents`
 
 ## Full Source
 
 ```json
 {
   "name": "git-ape",
-  "description": "Intelligent Azure deployment agent system for GitHub Copilot. Provides guided, safe, and validated Azure resource deployments using ARM templates, with built-in security analysis, cost estimation, and CI/CD pipeline integration.",
+  "description": "Intelligent agent system for deploying any Azure workload through GitHub Copilot. Provides guided, safe, and validated deployments using ARM templates, with built-in security analysis, cost estimation, and CI/CD pipeline integration.",
   "version": "0.0.1",
   "author": {
     "name": "Microsoft",
@@ -44,14 +44,14 @@ The plugin manifest defines the Git-Ape Copilot CLI plugin metadata.
   "keywords": [
     "azure",
     "cloud",
-    "infrastructure",
-    "arm-templates",
+    "workloads",
     "deployment",
+    "arm-templates",
     "devops",
-    "iac",
     "security",
     "cost-estimation",
-    "github-actions"
+    "github-actions",
+    "copilot-agents"
   ],
   "agents": ".github/agents/",
   "skills": ".github/skills/"

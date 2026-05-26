@@ -1,5 +1,5 @@
 {
-  "name": "Git-Ape Dev",
+  "name": "Git-Ape Agent Engineering",
   "image": "mcr.microsoft.com/devcontainers/python:3-3.12-bookworm",
 
   "features": {
@@ -10,12 +10,15 @@
       "upgradePackages": false
     },
     "ghcr.io/devcontainers/features/azure-cli:1": {},
-    "ghcr.io/devcontainers/features/powershell:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/copilot-cli:1": {}
   },
 
-  "onCreateCommand": "bash .devcontainer/post-create.sh",
+  "onCreateCommand": "bash .devcontainer/agent-engineering/post-create.sh",
+
+  "containerEnv": {
+    "WAZA_NO_UPDATE_CHECK": "1"
+  },
 
   "customizations": {
     "vscode": {
@@ -26,11 +29,13 @@
         "ms-azuretools.vscode-azurefunctions",
         "ms-azuretools.vscode-azure-mcp-server",
         "bewhite.psrule-vscode",
-        "vstirbu.vscode-mermaid-preview"
+        "ms-vscode.vscode-chat-customizations-evaluations"
       ],
       "settings": {
         "azureMcp.serverMode": "namespace",
-        "azureMcp.readOnly": false
+        "azureMcp.readOnly": false,
+        "task.allowAutomaticTasks": "on",
+        "chatCustomizationsEvaluations.waza.command": "waza"
       }
     }
   },

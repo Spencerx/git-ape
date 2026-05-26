@@ -11,6 +11,10 @@ description: "GitHub Actions workflow: Git-Ape: Destroy"
 
 **Workflow file:** `.github/workflows/git-ape-destroy.exampleyml`
 
+:::info[Activation required]
+This workflow ships as `git-ape-destroy.exampleyml` and is **inert** until renamed to `git-ape-destroy.yml`. The [`/git-ape-onboarding`](/docs/skills/git-ape-onboarding) flow renames every `.exampleyml` file in `.github/workflows/` to `.yml` after you complete the experimental-status acknowledgments.
+:::
+
 ## Triggers
 
 - **`push`** — branches: `["main"]` — paths: `.azure/deployments/**/metadata.json, .azure/deployments/**/state.json`

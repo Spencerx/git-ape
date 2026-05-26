@@ -133,6 +133,105 @@ graph TD
 
 ---
 
+## Example 3 — AI knowledge-base service
+
+A retrieval-augmented AI service: Azure OpenAI for embeddings and chat, Azure AI Search as the vector store, behind a Function App API.
+
+```mermaid
+graph TD
+    subgraph RG["rg-kbai-dev-eastus"]
+        FUNC["func-kbai-dev-eastus<br/>Function App (Python)"]
+        ASP["asp-kbai-dev-eastus<br/>Flex Consumption Plan"]
+        ST["stkbaidev<br/>Storage Account"]
+        AOAI["oai-kbai-dev-eastus<br/>Azure OpenAI"]
+        SRCH["srch-kbai-dev-eastus<br/>AI Search"]
+        AI["appi-kbai-dev-eastus<br/>App Insights"]
+    end
+
+    FUNC --> |"Embeddings + chat<br/>(Cognitive Services User)"| AOAI
+    FUNC --> |"Vector + hybrid search<br/>(Search Index Data Reader)"| SRCH
+    FUNC --> |"WebJobs storage<br/>(identity-based)"| ST
+    FUNC --> |"Hosted on"| ASP
+    FUNC --> |"Telemetry"| AI
+
+    classDef compute fill:#dbeafe,stroke:#1f6feb,color:#0b3d91
+    classDef ai fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    classDef data fill:#dcfce7,stroke:#15803d,color:#14532d
+    classDef obs fill:#fde68a,stroke:#b45309,color:#7c2d12
+    class FUNC,ASP compute
+    class AOAI,SRCH ai
+    class ST data
+    class AI obs
+```
+
+**Prompt:**
+
+```text
+@git-ape deploy a knowledge-base API: Function App + Azure OpenAI
+         + AI Search for the kbai project in dev, eastus
+```
+
+**What you get:**
+
+| Resource | Key settings enforced automatically |
+|---|---|
+| Function App | Flex Consumption, identity-based `AzureWebJobsStorage`, HTTPS-only |
+| Azure OpenAI | Local auth disabled, public network access locked down |
+| AI Search | Identity-based auth, free-tier blocked, semantic ranker available |
+| Storage Account | `allowSharedKeyAccess: false`, TLS 1.2 minimum |
+| RBAC | Function App → `Cognitive Services OpenAI User` on OpenAI, `Search Index Data Reader` on Search |
+
+---
+
+## Example 4 — Streaming data platform
+
+Real-time ingestion to a data lake: Event Hubs receives events, Stream Analytics shapes them, ADLS Gen2 stores the curated stream.
+
+```mermaid
+graph TD
+    subgraph RG["rg-telemetry-dev-eastus"]
+        EH["evhns-telemetry-dev-eastus<br/>Event Hubs Namespace"]
+        EHE["evh-telemetry-dev<br/>Event Hub"]
+        SA["asa-telemetry-dev-eastus<br/>Stream Analytics Job"]
+        ADLS["stadlstelemetrydev<br/>Storage Account (ADLS Gen2)"]
+        LOG["log-telemetry-dev-eastus<br/>Log Analytics"]
+    end
+
+    EHE --> |"Hosted in"| EH
+    SA --> |"Read events<br/>(Event Hubs Data Receiver)"| EHE
+    SA --> |"Write curated<br/>(Storage Blob Data Contributor)"| ADLS
+    EH --> |"Diagnostic logs"| LOG
+    SA --> |"Job logs"| LOG
+
+    classDef messaging fill:#dbeafe,stroke:#1f6feb,color:#0b3d91
+    classDef analytics fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    classDef data fill:#dcfce7,stroke:#15803d,color:#14532d
+    classDef obs fill:#fde68a,stroke:#b45309,color:#7c2d12
+    class EH,EHE messaging
+    class SA analytics
+    class ADLS data
+    class LOG obs
+```
+
+**Prompt:**
+
+```text
+@git-ape deploy a streaming data platform: Event Hubs + Stream Analytics
+         + ADLS Gen2 for the telemetry project in dev, eastus
+```
+
+**What you get:**
+
+| Resource | Key settings enforced automatically |
+|---|---|
+| Event Hubs Namespace | `disableLocalAuth: true`, TLS 1.2 minimum, zone-redundant where SKU supports |
+| Stream Analytics Job | System-assigned managed identity for both input and output |
+| Storage Account (ADLS Gen2) | Hierarchical namespace enabled, `allowSharedKeyAccess: false` |
+| RBAC | Stream Analytics → `Azure Event Hubs Data Receiver` on Event Hub, `Storage Blob Data Contributor` on ADLS |
+| Log Analytics | Diagnostic settings wired to namespace and job |
+
+---
+
 ## Use a reference architecture as the source of truth
 
 The Git-Ape [Vision](/docs/vision) describes a future state where governed documents — reference architectures, ADRs, security baselines — become the **ledger** that drives deployments. The agent's job is to compile those documents into compliant infrastructure.

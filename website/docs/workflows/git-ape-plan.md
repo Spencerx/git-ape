@@ -11,6 +11,10 @@ description: "GitHub Actions workflow: Git-Ape: Plan"
 
 **Workflow file:** `.github/workflows/git-ape-plan.exampleyml`
 
+:::info[Activation required]
+This workflow ships as `git-ape-plan.exampleyml` and is **inert** until renamed to `git-ape-plan.yml`. The [`/git-ape-onboarding`](/docs/skills/git-ape-onboarding) flow renames every `.exampleyml` file in `.github/workflows/` to `.yml` after you complete the experimental-status acknowledgments.
+:::
+
 ## Triggers
 
 - **`pull_request`** — paths: `.azure/deployments/**/template.json, .azure/deployments/**/parameters.json` — types: `opened, synchronize`
