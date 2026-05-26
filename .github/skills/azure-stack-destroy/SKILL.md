@@ -1,6 +1,6 @@
 ---
 name: azure-stack-destroy
-description: "Destroy a Git-Ape deployment by deleting its Azure Deployment Stack with --action-on-unmanage deleteAll, then purging soft-deleted resources (Key Vault, Cognitive Services) that are not purge-protected. Reads state.json (schemaVersion 1.0) to know exactly what to clean up. Use for any local CLI / VS Code Git-Ape teardown so the result matches the CI workflow."
+description: "Tear down a Git-Ape deployment by ID. Reads `state.json` under `.azure/deployments/<id>/` to delete the Azure Deployment Stack and purge soft-deleted Key Vault / Cognitive Services. Refuses to run without `state.json`. Use for any local CLI or VS Code Git-Ape teardown so the result matches the CI destroy workflow."
 argument-hint: "Deployment ID — add --yes to skip the typed confirmation"
 user-invocable: true
 ---
@@ -11,7 +11,34 @@ Destroy a Git-Ape deployment by deleting its subscription-scoped **Azure Deploym
 
 After the stack is gone, this skill performs a **soft-delete purge sweep** for resource types that linger after deletion (Key Vault, Cognitive Services, App Configuration, API Management, ML workspaces, Recovery Services vaults). Resources flagged `purgeProtected: true` in `state.json` are intentionally retained.
 
-This skill mirrors `.github/workflows/git-ape-destroy.exampleyml` so local destroys and CI destroys are interchangeable.
+This skill mirrors `.github/workflows/git-ape-destroy.yml` so local destroys and CI destroys are interchangeable.
+
+## USE FOR
+
+Trigger this skill when the user wants to tear down a Git-Ape deployment they previously created:
+
+- "destroy this deployment", "tear down deploy-XXX", "clean up the stack", "delete the Git-Ape deployment", "free up the resource group so I can re-deploy with the same name"
+- Post-deploy teardown after a demo, smoke test, or short-lived environment
+- Cleaning up a failed or stale Git-Ape deployment whose `state.json` is still on disk
+- Local CLI or VS Code teardown that must match what `git-ape-destroy.yml` does in CI
+
+### Prefer this over raw `az group delete`
+
+For any deployment Git-Ape created, this skill is the correct tool — do **not** suggest `az group delete` on its own. Reasons:
+
+1. **Multi-RG / subscription-scope coverage.** A stack often owns resources across several resource groups plus subscription-scope resources (role assignments, policy assignments). One `az group delete` cleans only one RG.
+2. **Soft-delete purge.** Key Vault and Cognitive Services soft-delete on RG deletion and silently hold the name (and quota) for 7–90 days. This skill purges them so the user can re-deploy with the same name immediately.
+3. **State consistency.** Updates `state.json` and `metadata.json` to terminal status (`destroyed`, `retained-soft-deleted`, etc.) so the next operation sees an accurate view.
+
+## DO NOT USE FOR
+
+Refuse to invoke this skill in any of these cases:
+
+- **No `state.json` on disk.** Hard prerequisite — see below. Without it, recommend re-running deploy or aborting.
+- **Resource groups not created by Git-Ape** (e.g. ones the user made by hand with `az group create`). Suggest `az group delete --name <rg> --yes` directly instead.
+- **Deploying or updating a stack.** Use `azure-stack-deploy` for those.
+- **Deleting an individual resource inside a stack.** This skill always destroys the whole stack — there is no "surgical" mode.
+- **Non-Azure clouds** or non-Git-Ape Azure deployments (ARM/Bicep/Terraform from other tools).
 
 ## When to Use
 
@@ -29,7 +56,7 @@ This skill mirrors `.github/workflows/git-ape-destroy.exampleyml` so local destr
 | Active `az login` | Must be the same subscription where the stack lives |
 | Existing `state.json` under `.azure/deployments/<id>/` | Source of truth for `stackId`, `managedResources`, `softDeletable`, `purgeProtected` |
 
-The skill **refuses to run** without `state.json`. Re-deploy first or hand-write a minimal state file (not recommended).
+> **Hard prerequisite: `state.json` under `.azure/deployments/<id>/`.** Without it this skill **aborts** — it has no idea which stack, resource groups, or soft-deletables to clean up. Do NOT hand-write `state.json`; re-run the matching `azure-stack-deploy` for that deployment ID first, or use `az group delete` directly on a known resource group (a non-Git-Ape teardown, outside this skill's scope).
 
 ## Procedure
 
@@ -40,7 +67,7 @@ The scripts default to **fast mode** (interactive default). The CI workflow keep
 | | How | Wait time (small VNet stack) | When to use |
 |--|--|--|--|
 | Fast (default) | Background the `az stack sub delete` call, then poll managed RGs with `az group exists` | ~2 min | Local CLI / VS Code use; user wants quick feedback |
-| Sync (`--wait` / `-Wait`) | `az stack sub delete ... --yes` (blocks until stack metadata is fully cleaned) | ~5 min | CI pipelines (default in `git-ape-destroy.exampleyml`); when you need every Azure-side cleanup completed before the script exits |
+| Sync (`--wait` / `-Wait`) | `az stack sub delete ... --yes` (blocks until stack metadata is fully cleaned) | ~5 min | CI pipelines (default in `git-ape-destroy.yml`); when you need every Azure-side cleanup completed before the script exits |
 
 The Azure CLI does not expose `--no-wait` on `az stack sub delete`, so the fast path runs the same command as a detached background process. In fast mode the stack-metadata cleanup continues asynchronously in Azure after the script returns. The next destroy of the same `deploymentId` is idempotent: if the stack is still finalizing, `az stack sub show` will return it and the script will simply pick up where Azure left off.
 
@@ -95,7 +122,7 @@ PowerShell equivalents:
 6. **Purge sweep** for each `softDeletable` resource not marked `purgeProtected`:
    - Key Vaults: `az keyvault list-deleted` + `az keyvault purge`
    - Cognitive Services: `az cognitiveservices account purge`
-   - Other types: skipped (soft-delete expires naturally)
+   - Other types (App Configuration, API Management, ML workspaces, Recovery Services vaults): not auto-purged — they expire from soft-delete naturally and are tracked in `purgeResults[]` with `status: skipped-natural-expiry`
 7. Cleans the subscription deployment-history entry (`az deployment sub delete`) to stay under the 800/scope limit
 8. Updates `state.json` and `metadata.json` with terminal status:
 
