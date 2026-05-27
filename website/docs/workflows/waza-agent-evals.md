@@ -137,6 +137,15 @@ concurrency:
   group: waza-agent-evals-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+# Pin waza to a known-good release. Bump deliberately after validating that
+# the new version's eval behavior still matches our baselines. Never resolve
+# via `latest` — the microsoft/waza repo publishes the core release and the
+# sibling azd-extension release at the same commit, and GitHub's
+# `releases/latest` endpoint returns whichever was published last, which has
+# bitten PR #109 with a 404 on the wrong asset.
+env:
+  WAZA_VERSION: 'v0.33.0'
+
 jobs:
   # ---------------------------------------------------------------------------
   # preflight: verify that the COPILOT_GITHUB_TOKEN secret is configured.
@@ -365,15 +374,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install waza (latest GitHub release)
+      - name: Install waza (pinned release)
         run: |
           set -euo pipefail
-          waza_version="$(curl -fsSL \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            https://api.github.com/repos/microsoft/waza/releases/latest \
-            | jq -r '.tag_name')"
-          if [ -z "${waza_version}" ] || [ "${waza_version}" = "null" ]; then
-            echo "::error::could not resolve latest waza release tag"
+          waza_version="${WAZA_VERSION}"
+          if [ -z "${waza_version}" ]; then
+            echo "::error::WAZA_VERSION env var is not set"
             exit 1
           fi
           os="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -476,15 +482,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install waza (latest GitHub release)
+      - name: Install waza (pinned release)
         run: |
           set -euo pipefail
-          waza_version="$(curl -fsSL \
-            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
-            https://api.github.com/repos/microsoft/waza/releases/latest \
-            | jq -r '.tag_name')"
-          if [ -z "${waza_version}" ] || [ "${waza_version}" = "null" ]; then
-            echo "::error::could not resolve latest waza release tag"
+          waza_version="${WAZA_VERSION}"
+          if [ -z "${waza_version}" ]; then
+            echo "::error::WAZA_VERSION env var is not set"
             exit 1
           fi
           echo "Installing waza ${waza_version}"
