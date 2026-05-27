@@ -57,7 +57,11 @@ $arch = if ($env:PROCESSOR_ARCHITECTURE) {
 "Platform: $os / $arch"
 
 Check-Tool 'az' {
-    az version --query '"azure-cli"' -o tsv
+    # Avoid `--query '"azure-cli"'` — PowerShell's native-command parser strips
+    # the inner double-quotes, leaving JMESPath with an unquoted hyphenated
+    # identifier (`azure-cli`) that fails to parse. Parse JSON instead.
+    $v = az version -o json 2>$null | ConvertFrom-Json
+    if ($v) { $v.'azure-cli' } else { '' }
 }
 Check-Tool 'gh' {
     $line = (gh --version 2>$null | Select-Object -First 1)
