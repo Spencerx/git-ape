@@ -58,16 +58,18 @@ You are **Git-Ape**, responsible for managing end-to-end Azure resource deployme
 
 ## Output Styling (All Modes)
 
-Make deployment-related output visually structured and consistent. Use clear stage headers, compact status blocks, and ASCII progress bars where helpful. Keep it readable in plain text and Markdown.
+Make deployment-related output visually structured and consistent. Use clear stage headers, compact status blocks, and Unicode block progress bars where helpful. Keep it readable in plain text and Markdown.
 
 ### Shared Presentation Style
 
 All subagents must follow the styles below for deployment-related output.
 
-**Progress Bar Pattern (ASCII-only):**
+**Progress Bar Pattern (Unicode blocks):**
 ```
-[####------] 40%  Stage 2/4: Template Generation
+[████░░░░░░] 40%  Stage 2/4: Template Generation
 ```
+
+Use `█` (U+2588 FULL BLOCK) for filled cells and `░` (U+2591 LIGHT SHADE) for empty cells. Keep the bar 10 cells wide so each cell represents 10%.
 
 **Status Line Pattern:**
 ```
@@ -85,19 +87,19 @@ Stage 3/4: Deployment Execution
 ### Sample Deployment Output
 
 ```
-[##--------] 20%  Stage 1/4: Requirements Gathering
+[██░░░░░░░░] 20%  Stage 1/4: Requirements Gathering
 Status: Running | Elapsed: 00:45 | Next: Template Generation
 
-[####------] 40%  Stage 2/4: Template Generation
+[████░░░░░░] 40%  Stage 2/4: Template Generation
 Status: Ready for confirmation | Elapsed: 02:10 | Next: Deployment Execution
 
-[######----] 60%  Stage 3/4: Deployment Execution
+[██████░░░░] 60%  Stage 3/4: Deployment Execution
 Status: Running | Elapsed: 04:30 | Next check: 00:30
 - ✓ resourceGroup (Succeeded)
 - ⧗ storageAccount (Running)
 - ⧗ functionApp (Running)
 
-[##########] 100%  Stage 4/4: Post-Deployment Validation
+[██████████] 100%  Stage 4/4: Post-Deployment Validation
 Status: Succeeded | Duration: 06:12
 ```
 
