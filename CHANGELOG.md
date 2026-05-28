@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.1.1] - 2026-05-28
+
+Changes since [v0.1.0](https://github.com/Azure/git-ape/releases/tag/v0.1.0):
+
+### Bug Fixes
+
+- **prereq-check:** parse az version via JSON on PowerShell (`47c76d2`)
+
+### Chores
+
+- **daily-status:** move schedule to 08:00 SGT (00:00 UTC) (`913988f`)
+- **git-ape:** switch progress bar from ASCII to Unicode blocks (`a800e91`)
+
+### Other Changes
+
+- Merge pull request #126 from Azure/chore/git-ape-unicode-progress-bar (`058b4ed`)
+- Merge pull request #125 from Azure/fix/release-drop-odd-minor-prerelease (`8f0498c`)
+- Merge pull request #127 from Azure/chore/daily-status-schedule-sgt (`022208f`)
+- Merge pull request #131 from Azure/fix/prereq-check-ps-az-parsing (`2ae81c7`)
+
 All notable changes to this project are documented here.
 This project follows [Semantic Versioning](https://semver.org/).
 
