@@ -22,5 +22,6 @@
     "copilot-agents"
   ],
   "agents": ".github/agents/",
-  "skills": ".github/skills/"
+  "skills": ".github/skills/",
+  "prompts": ".github/prompts/"
 }
