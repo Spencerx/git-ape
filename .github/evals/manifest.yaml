@@ -27,6 +27,8 @@ skills:
   # Pilot tier: full multi-model fan-out (most-trusted skills).
   - name: prereq-check
     tier: pilot
+  - name: git-ape-onboarding
+    tier: pilot
 
 # Per-tier model fan-out. The matrix runs each selected skill against every
 # model in its tier. To compare additional models, add them here.
