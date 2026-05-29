@@ -105,15 +105,26 @@ for model in ${models[@]}; do
   echo "▶ Eval: ${model}"
   waza run ".github/evals/agents/${agent}/eval.yaml" \
     --model "${model}" \
-    --judge-model "claude-sonnet-4.6" \
+    --judge-model "claude-opus-4.7" \
     --no-cache \
     --output "/tmp/waza-promote/${agent}-${model}.json" \
     2>&1 | tail -3
 done
 ```
 
-Use `--judge-model claude-sonnet-4.6` for stable cross-model quality
-scoring. Run sequentially — quota consumption stays predictable.
+`--judge-model claude-opus-4.7` pins the LLM-as-judge to a model that
+is NOT in any runner roster (pilot or expanded). Two reasons:
+
+1. **No self-grading bias.** When the same model is both runner and
+   judge, that leg's prompt-grader verdicts conflate model capability
+   with judge agreement. Pinning the judge outside the roster gives
+   every leg an independent grader.
+2. **Judge capability ≥ every runner.** `claude-opus-4.7` strictly
+   dominates the current pilot/expanded runner mix (sonnet-4.6,
+   gpt-5.4, gpt-5.3-codex, opus-4.6) on reasoning benchmarks, so it
+   can score the strongest runner outputs without ceiling effects.
+
+Run sequentially — quota consumption stays predictable.
 
 ### Step 4 — Token budget check
 

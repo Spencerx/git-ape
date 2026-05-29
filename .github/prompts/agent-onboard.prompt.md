@@ -447,11 +447,16 @@ graders wire up correctly — not a quality assessment.
 mkdir -p /tmp/waza-runs
 waza run ".github/evals/agents/${agent}/eval.yaml" \
   --model "${input:smokeModel:claude-sonnet-4.6}" \
-  --judge-model "claude-sonnet-4.6" \
+  --judge-model "claude-opus-4.7" \
   --no-cache \
   --output "/tmp/waza-runs/${agent}-onboard-smoke.json" \
   2>&1 | tail -10
 ```
+
+`--judge-model claude-opus-4.7` is fixed (NOT a parameter) for the
+same reason as `/agent-promote`: judge sits outside every runner
+roster, so smoke verdicts cannot leak self-grading bias even if the
+operator changes `smokeModel`. `smokeModel` only swaps the runner.
 
 Parse the result JSON and report:
 
