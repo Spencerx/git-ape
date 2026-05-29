@@ -350,28 +350,19 @@ jobs:
           fi
 
           # VS Code Marketplace rejects semver pre-release suffixes
-          # (e.g. 0.1.0-rc.1). The official channel model uses odd minors
-          # for the Pre-Release channel and even minors for Release.
-          # See: https://code.visualstudio.com/api/working-with-extensions/publishing-extension#prerelease-extensions
+          # (e.g. 0.1.0-rc.1). We publish every release as a stable
+          # marketplace release regardless of minor parity — the odd/even
+          # minor convention is opt-in and would require packaging the VSIX
+          # with --pre-release to match, which we don't do here.
           if [[ "$VERSION" == *-* ]]; then
             echo "Version $VERSION carries a semver pre-release suffix, which the"
             echo "VS Code Marketplace does not accept. Skipping marketplace publish."
             exit 0
           fi
 
-          MINOR=$(echo "$VERSION" | cut -d. -f2)
-          if (( MINOR % 2 == 1 )); then
-            FLAG="--pre-release"
-            CHANNEL="Pre-Release"
-          else
-            FLAG=""
-            CHANNEL="Release"
-          fi
-
           VSIX_FILE=$(ls ./*.vsix)
-          echo "Publishing $VSIX_FILE to VS Code Marketplace ($CHANNEL channel)"
-          # shellcheck disable=SC2086
-          vsce publish --packagePath "$VSIX_FILE" --no-dependencies $FLAG
+          echo "Publishing $VSIX_FILE to VS Code Marketplace (Release channel)"
+          vsce publish --packagePath "$VSIX_FILE" --no-dependencies
 
       - name: Bump version files and update CHANGELOG.md on main
         if: steps.ver.outputs.prerelease == 'false'

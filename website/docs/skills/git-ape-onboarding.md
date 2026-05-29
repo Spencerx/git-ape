@@ -45,6 +45,7 @@ This skill configures:
 3. RBAC role assignment(s) on subscription scope
 4. GitHub environments (`azure-deploy*`, `azure-destroy`)
 5. Required GitHub secrets (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`)
+6. Scaffolded GitHub Actions workflow files (`git-ape-plan.yml`, `-deploy.yml`, `-destroy.yml`, `-verify.yml`, `-drift.{md,lock.yml}`) and deployment standards (`.github/copilot-instructions.md`) into the user's working copy
 
 ## Prerequisites
 
@@ -59,6 +60,14 @@ The prereq-check skill validates: `az` (≥ 2.50), `gh` (≥ 2.0), `jq` (≥ 1.6
 Do NOT proceed with onboarding until prereq-check reports **✅ READY**.
 
 Additionally, the Azure identity used must have **Owner** or **User Access Administrator** on the target subscription(s), and the GitHub identity must have **admin** access to the target repository.
+
+## Invariants
+
+These rules are non-negotiable. The agent MUST NOT improvise around them.
+
+- **Default branch is always `main`.** Never use `master`, never auto-detect a non-`main` default, and never substitute any other name. All federated credential subjects, environment branch policies, and example commands use `refs/heads/main` / the literal string `main`. If a user's repository uses something other than `main`, prompt for it once and use the user-supplied value explicitly — never silently default to `master`.
+- **Federated credential names use the `fc-main-branch` form,** not `fc-master-branch`. See Step 5 for the canonical subject strings.
+- **Workflows ship `main`-targeted triggers.** The scaffold step copies workflow files that reference `branches: [main]`; do not rewrite them to `master`.
 
 ## Execution Modes
 
@@ -108,16 +117,59 @@ OIDC_PREFIX="repo:<org>/<repo>"
 # if org customization returns false
 OIDC_PREFIX="repository_owner_id:<OWNER_ID>:repository_id:<REPO_ID>"
 ```
-5. Create federated credentials for `main`, `pull_request`, `azure-deploy*`, and `azure-destroy`.
+5. Create federated credentials with these canonical subjects (always `refs/heads/main` — never `master`):
+   - `fc-main-branch`     subject `"$OIDC_PREFIX:ref:refs/heads/main"`     description `"Main branch deployments"`
+   - `fc-pull-request`    subject `"$OIDC_PREFIX:pull_request"`            description `"Pull request plan/validate"`
+   - `fc-azure-deploy`    subject `"$OIDC_PREFIX:environment:azure-deploy"` (one per environment in multi-env mode)
+   - `fc-azure-destroy`   subject `"$OIDC_PREFIX:environment:azure-destroy"`
 6. Assign RBAC on each target subscription.
 7. Set GitHub repo or environment secrets.
 8. Create GitHub environments and branch policies when permissions allow.
-9. Capture compliance and Azure Policy preferences (see below).
-10. Collect explicit acknowledgments for experimental status and production safety.
-11. Activate workflows by renaming `.exampleyml` to `.yml` (only if all acknowledgments confirmed; see Step 11 section below).
-12. Verify federated credentials, role assignments, secrets, and workflow activation.
+9. Scaffold workflow files and deployment standards into the user's working copy (see below).
+10. Capture compliance and Azure Policy preferences (see below).
+11. Verify federated credentials, role assignments, and secrets.
 
-### Step 9: Compliance & Azure Policy Preferences
+### Step 9: Scaffold workflow files and deployment standards
+
+The GitHub Actions workflows that power Git-Ape (`git-ape-plan.yml`,
+`-deploy.yml`, `-destroy.yml`, `-verify.yml`, `-drift.md`, `-drift.lock.yml`)
+and the deployment standards file (`.github/copilot-instructions.md`) ship
+as templates inside this skill at `./templates/`.
+
+After identity, secrets, and environments are configured, run the scaffold
+helper to copy these templates into the user's working copy. Two parity
+implementations ship — pick the one that matches the user's shell:
+
+```bash
+# macOS / Linux / WSL
+./scripts/scaffold-repo.sh
+```
+
+```powershell
+# Windows (PowerShell 7+)
+pwsh .github/skills/git-ape-onboarding/scripts/scaffold-repo.ps1
+```
+
+Both scripts produce byte-identical output and follow the same rules below.
+The onboarding-template-check workflow enforces parity on every PR.
+
+The helper:
+
+- Resolves the target repo root via `git rev-parse --show-toplevel` (override
+  by passing an explicit path as the first argument).
+- Copies each template only if the destination does not already exist
+  (**skip-with-notice on collision** — never overwrites a customized file).
+- Prints `✓ Created` for new files, `⊝ Skipped` for collisions, and a final
+  `Created N file(s), skipped M file(s).` summary.
+- Leaves all files **unstaged**. It does not run `git add`, `git commit`,
+  `git push`, or open a pull request — the user decides how to land them.
+- For each skipped file, prints a `diff -u` command pointing at the
+  canonical template so the user can reconcile manually.
+
+If the user already had a custom `.github/copilot-instructions.md`, the
+scaffold step skips it. Step 10 (below) handles that case explicitly.
+
+### Step 10: Compliance & Azure Policy Preferences
 
 After RBAC and environment setup, ask the user about compliance requirements and update the `## Compliance & Azure Policy` section in `.github/copilot-instructions.md`:
 
@@ -138,79 +190,31 @@ After RBAC and environment setup, ask the user about compliance requirements and
    ```
 
 3. **Update `copilot-instructions.md`** with the user's choices:
-   - Edit the `## Compliance & Azure Policy` → `### Compliance Frameworks` section
-   - Set the `### Policy Enforcement Mode` default to the user's choice
-   - Commit the update as part of the onboarding changes
-
-### Step 11: Activate GitHub Workflows
-
-After collecting acknowledgments for experimental status and production safety (see agent's "Acknowledgment Phase"), activate the Git-Ape workflows by renaming `.exampleyml` files to `.yml` in the `.github/workflows/` directory.
-
-**Files to activate:**
-- `git-ape-plan.exampleyml` → `git-ape-plan.yml` (validates template and shows what-if)
-- `git-ape-deploy.exampleyml` → `git-ape-deploy.yml` (executes deployments)
-- `git-ape-destroy.exampleyml` → `git-ape-destroy.yml` (tears down resources)
-- `git-ape-verify.exampleyml` → `git-ape-verify.yml` (runs verification steps)
-
-**Rename commands (Unix/macOS/Linux):**
-```bash
-cd .github/workflows
-for f in *.exampleyml; do
-  target="${f%.exampleyml}.yml"
-  mv "$f" "$target"
-  echo "Renamed: $f -> $target"
-done
-```
-
-**Rename commands (Windows PowerShell):**
-```powershell
-cd .github\workflows
-Get-ChildItem *.exampleyml | ForEach-Object {
-  $newName = $_.Name -replace '\.exampleyml$', '.yml'
-  Rename-Item -Path $_.FullName -NewName $newName
-  Write-Host "Renamed: $($_.Name) -> $newName"
-}
-```
-
-**Verification (all platforms):**
-```bash
-ls .github/workflows/git-ape-*.yml
-```
-
-Should output:
-```
-git-ape-deploy.yml
-git-ape-destroy.yml
-git-ape-plan.yml
-git-ape-verify.yml
-```
-
-**Output after activation:**
-Display summary:
-```
-✅ Workflows activated:
-  - git-ape-plan.yml (validates and plans deployments)
-  - git-ape-deploy.yml (executes deployments and integration tests)
-  - git-ape-destroy.yml (tears down resources when requested)
-  - git-ape-verify.yml (runs post-deployment verification)
-
-Next steps:
-1. Review .github/workflows/git-ape-*.yml for familiarity
-2. Push changes to a feature branch and open a PR
-3. Verify the plan workflow runs and shows what-if analysis in the PR comment
-4. For first deployment, merge to main and monitor git-ape-deploy.yml execution
-```
+   - If the file does not exist (scaffold step was skipped or scaffolding
+     was not run), print the captured preferences in chat and ask the user
+     to add them manually. Do NOT create a new file from scratch — that is
+     the scaffold step's responsibility.
+   - If the file exists AND contains a `## Compliance & Azure Policy`
+     section, edit the `### Compliance Frameworks` and
+     `### Policy Enforcement Mode` subsections in place.
+   - If the file exists but does NOT contain that section (user has a
+     customized file), do NOT mutate it. Instead, print the captured
+     preferences and a suggested patch in chat so the user can apply it.
+   - In all cases, leave changes unstaged and let the user commit them.
 
 ## Safe-Execution Rules
 
 1. Echo target repository and subscription(s) before execution.
 2. Require explicit user confirmation before running onboarding.
 3. Never print secret values in chat output.
-4. **Require explicit acknowledgments before activating workflows** — User must confirm Git-Ape is experimental, will review plans, and won't deploy to production.
-5. **Only activate workflows if ALL acknowledgments are confirmed** — Renaming happens only after explicit "Yes" to all three questions.
-6. If user refuses any acknowledgment, complete onboarding but skip workflow activation. User can enable later manually.
-7. Summarize what was created or updated (app registration, federated credentials, role assignments, GitHub environments, workflows activated).
-8. If onboarding fails, surface the failing step and command context, then stop.
+4. Summarize what was created or updated (app registration, federated credentials, role assignments, GitHub environments, scaffolded files).
+5. If onboarding fails, surface the failing step and command context, then stop.
+6. Never overwrite an existing `.github/workflows/*` file or
+   `.github/copilot-instructions.md`. The scaffold helper enforces
+   skip-with-notice; do not bypass it.
+7. Never run `git add`, `git commit`, `git push`, or open a PR for the
+   scaffolded files — leave them unstaged so the user decides how to land
+   them.
 
 ## Suggested Agent Flow
 
@@ -218,13 +222,11 @@ Next steps:
 2. Confirm target repo URL, onboarding mode, and role model.
 3. Validate current Azure/GitHub auth context (subscription, tenant, GitHub org).
 4. Ask for final confirmation.
-5. Execute the required Azure CLI and GitHub CLI commands directly from this playbook (Steps 1-8).
-6. Ask compliance framework and enforcement mode preferences (Step 9 in playbook).
-7. Update `copilot-instructions.md` with compliance preferences.
-8. **Display experimental warning and collect acknowledgments** (three explicit "Yes" answers required).
-9. If all acknowledgments confirmed, execute workflow activation (Step 11 in playbook).
-10. If any acknowledgment refused, skip workflow activation (workflows remain `.exampleyml`).
-11. Summarize outcome, activated workflows (if any), and suggest verification commands.
+5. Execute the required Azure CLI and GitHub CLI commands directly from this playbook.
+6. Scaffold workflow files and `copilot-instructions.md` via `./scripts/scaffold-repo.sh` on macOS/Linux/WSL, or `pwsh ./scripts/scaffold-repo.ps1` on Windows (Step 9 in playbook). Report which files were created vs skipped.
+7. Ask compliance framework and enforcement mode preferences (Step 10 in playbook).
+8. Update `copilot-instructions.md` with compliance preferences — or, if the file was skipped by the scaffold step, surface the preferences in chat for manual integration.
+9. Summarize outcome (including scaffolded file counts) and suggest verification commands.
 
 ## Known Gotchas
 

@@ -4,15 +4,15 @@ sidebar_label: "Verify Setup"
 description: "GitHub Actions workflow: Git-Ape: Verify Setup"
 ---
 
-<!-- AUTO-GENERATED — DO NOT EDIT. Source: .github/workflows/git-ape-verify.exampleyml -->
+<!-- AUTO-GENERATED — DO NOT EDIT. Source: .github/skills/git-ape-onboarding/templates/workflows/git-ape-verify.yml -->
 
 
 # Git-Ape: Verify Setup
 
-**Workflow file:** `.github/workflows/git-ape-verify.exampleyml`
+**Workflow file:** `.github/skills/git-ape-onboarding/templates/workflows/git-ape-verify.yml`
 
-:::info[Activation required]
-This workflow ships as `git-ape-verify.exampleyml` and is **inert** until renamed to `git-ape-verify.yml`. The [`/git-ape-onboarding`](/docs/skills/git-ape-onboarding) flow renames every `.exampleyml` file in `.github/workflows/` to `.yml` after you complete the experimental-status acknowledgments.
+:::info[Scaffolded by `/git-ape-onboarding`]
+This workflow is **shipped as a template** under `.github/skills/git-ape-onboarding/templates/workflows/` and copied into your repository's `.github/workflows/` by the [`/git-ape-onboarding`](/docs/skills/git-ape-onboarding) flow. It does **not** run in the git-ape repo itself.
 :::
 
 ## Triggers
@@ -81,7 +81,7 @@ jobs:
             echo "✅ AZURE_TENANT_ID is set"
           fi
 
-          if [[ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]]; then
+          if [[ -z "${{ vars.AZURE_SUBSCRIPTION_ID }}" ]]; then
             echo "::error::Missing secret: AZURE_SUBSCRIPTION_ID"
             MISSING=$((MISSING + 1))
           else
@@ -97,7 +97,7 @@ jobs:
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Verify Azure access
         if: steps.secrets.outputs.missing == '0'
@@ -162,6 +162,8 @@ jobs:
             "git-ape-plan.yml:Git-Ape: Plan"
             "git-ape-deploy.yml:Git-Ape: Deploy"
             "git-ape-destroy.yml:Git-Ape: Destroy"
+            "git-ape-drift.yml:Git-Ape: Drift Detection"
+            "git-ape-ttl-reaper.yml:Git-Ape: TTL Reaper"
           )
 
           for WF in "${WORKFLOWS[@]}"; do
