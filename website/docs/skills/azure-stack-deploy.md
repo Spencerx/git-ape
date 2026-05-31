@@ -1,7 +1,7 @@
 ---
 title: "Azure Stack Deploy"
 sidebar_label: "Azure Stack Deploy"
-description: "Deploy an ARM template as a subscription-scoped Azure Deployment Stack (idempotent across resource groups and sub-scope). Captures managed resources, classifies soft-deletable types, detects Key Vault purge protection, and writes extended state.json (schemaVersion 1.0). Use for any local CLI / VS Code Git-Ape deployment so the result matches the CI workflow."
+description: "Run an Azure Deployment Stack create (subscription scope) for a prepared Git-Ape deployment artifact and write state.json (schemaVersion 1.0). Use locally so the result matches the CI deploy workflow."
 ---
 
 <!-- AUTO-GENERATED — DO NOT EDIT. Source: .github/skills/azure-stack-deploy/SKILL.md -->
@@ -9,7 +9,7 @@ description: "Deploy an ARM template as a subscription-scoped Azure Deployment S
 
 # Azure Stack Deploy
 
-> Deploy an ARM template as a subscription-scoped Azure Deployment Stack (idempotent across resource groups and sub-scope). Captures managed resources, classifies soft-deletable types, detects Key Vault purge protection, and writes extended state.json (schemaVersion 1.0). Use for any local CLI / VS Code Git-Ape deployment so the result matches the CI workflow.
+> Run an Azure Deployment Stack create (subscription scope) for a prepared Git-Ape deployment artifact and write state.json (schemaVersion 1.0). Use locally so the result matches the CI deploy workflow.
 
 ## Details
 
@@ -27,13 +27,20 @@ description: "Deploy an ARM template as a subscription-scoped Azure Deployment S
 
 Deploy a Git-Ape deployment artifact as a subscription-scoped **Azure Deployment Stack** (`az stack sub create --action-on-unmanage deleteAll`). The stack is the lifecycle owner of every resource the template creates — across resource groups and subscription scope — which makes destroy idempotent in a single call (see [`azure-stack-destroy`](../azure-stack-destroy/SKILL.md)).
 
-This skill produces the **same `state.json`** schema (`schemaVersion: "1.0"`) as the CI workflow at `.github/workflows/git-ape-deploy.exampleyml`, so local deployments and pipeline deployments are interchangeable.
+This skill produces the **same `state.json`** schema (`schemaVersion: "1.0"`) as the CI workflow at `.github/workflows/git-ape-deploy.yml`, so local deployments and pipeline deployments are interchangeable.
 
 ## When to Use
 
 - Local deployment from VS Code or terminal (the `git-ape` agent invokes this in Stage 3)
 - Re-deploying an existing deployment ID after template edits — stacks are stateful, so this is an in-place update
 - Any time you would otherwise run `az deployment sub create` against a Git-Ape `template.json`
+
+## Do NOT use for
+
+- **Tearing down / destroying** an existing deployment — use [`azure-stack-destroy`](../azure-stack-destroy/SKILL.md) instead
+- **What-if preview / preflight validation** without deploying — use [`azure-deployment-preflight`](../azure-deployment-preflight/SKILL.md) instead
+- **Off-topic** (non-Azure, non-deployment) requests
+- Generating or editing ARM templates — use `azure-prepare` or another IaC authoring skill
 
 ## Prerequisites
 
@@ -82,7 +89,7 @@ The script:
    - `--description "Git-Ape deployment <id>"`
    - `--tags managedBy=git-ape deploymentId=<id>`
    - `--yes --verbose`
-4. **On stack failure**, falls back to `az deployment sub create` (warns the user — no soft-delete / multi-RG idempotency on the fallback path)
+4. **On stack failure**, falls back to `az deployment sub create` and prints `⚠️ FALLBACK: no multi-RG idempotency, no soft-delete tracking` so the trade-off is unambiguous
 5. **On any deployment failure**, dumps the per-operation failure list (`az deployment operation sub list`) inline so the root cause is visible without clicking into the Portal
 6. **On success**, queries `az stack sub show --query "resources[].id"` for the live managed-resource list, classifies each resource (type, scope, soft-deletable, purge-protected), and writes the extended `state.json`
 7. Updates `metadata.json` with `status: "succeeded"`, `deployMethod`, and `resourceGroups[]`
@@ -97,6 +104,15 @@ Stack ID: /subscriptions/<sub>/providers/Microsoft.Resources/deploymentStacks/de
 To destroy this deployment:
   /azure-stack-destroy deploy-20260506-001
 ```
+
+## What to tell the user after running
+
+After the script returns, your reply MUST mention:
+
+1. The primitive used: `az stack sub create --action-on-unmanage deleteAll` (or fallback `az deployment sub create`)
+2. The stack ID (from `state.json.stackId`) — this is the single handle for destroy
+3. That `state.json` (schemaVersion 1.0) was written under the deployment folder
+4. The next-step destroy command: `/azure-stack-destroy <deploymentId>`
 
 ## Arguments
 

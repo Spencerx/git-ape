@@ -100,7 +100,10 @@ function Get-ResourceClassification {
     param([string]$ResourceId)
 
     $type = $null
-    if ($ResourceId -match 'providers/([^/]+/[^/]+)') {
+    # Use the LAST providers/<namespace>/<type> segment so extension/nested
+    # resources (e.g. a role assignment scoped to a Key Vault) are classified by
+    # their own type rather than the parent resource's type.
+    if ($ResourceId -match '.*providers/([^/]+/[^/]+)') {
         $type = $matches[1]
     }
     $scope = if ($ResourceId -match '/resourceGroups/') { 'resourceGroup' } else { 'subscription' }

@@ -295,10 +295,14 @@ if ($SoftCount -gt 0 -and ($StackDeleted -or $RgDeleted)) {
             }
             'Microsoft.CognitiveServices/accounts' {
                 if (-not $protected) {
-                    $loc = ''
-                    if ($resId -match 'locations/([^/]+)') { $loc = $matches[1] }
+                    # Account IDs are resource-group scoped (no /locations/<region>
+                    # segment); resolve the region from the soft-deleted account
+                    # list and the resource group from the original resource ID.
+                    $loc = az cognitiveservices account list-deleted --query "[?name=='$resName'] | [0].location" -o tsv 2>$null
+                    $resRg = ''
+                    if ($resId -match '/resourceGroups/([^/]+)') { $resRg = $matches[1] }
                     if ($loc) {
-                        az cognitiveservices account purge --name $resName --location $loc --resource-group '' 2>$null | Out-Null
+                        az cognitiveservices account purge --name $resName --location $loc --resource-group $resRg 2>$null | Out-Null
                     }
                 }
             }

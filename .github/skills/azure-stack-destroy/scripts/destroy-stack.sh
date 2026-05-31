@@ -295,10 +295,16 @@ if [[ "$SOFT_COUNT" -gt 0 ]] && [[ "$STACK_DELETED" == "true" || "$RG_DELETED" =
                 ;;
             "Microsoft.CognitiveServices/accounts")
                 if [[ "$PURGE_PROTECTED" != "true" ]]; then
-                    LOC=$(echo "$RES_ID" | grep -oE '(?<=locations/)[^/]+' || echo "")
+                    # Cognitive Services account IDs are resource-group scoped and
+                    # contain no /locations/<region> segment, so the region must be
+                    # resolved from the soft-deleted account list. The resource
+                    # group comes from the original resource ID.
+                    LOC=$(az cognitiveservices account list-deleted \
+                        --query "[?name=='$RES_NAME'] | [0].location" -o tsv 2>/dev/null || echo "")
+                    RES_RG=$(echo "$RES_ID" | sed -n 's#.*/resourceGroups/\([^/]*\)/.*#\1#p')
                     if [[ -n "$LOC" ]]; then
                         az cognitiveservices account purge --name "$RES_NAME" --location "$LOC" \
-                            --resource-group "" 2>/dev/null || true
+                            --resource-group "$RES_RG" 2>/dev/null || true
                     fi
                 fi
                 ;;

@@ -414,12 +414,17 @@ jobs:
                 fi
                 ;;
               "Microsoft.CognitiveServices/accounts")
-                # Cognitive Services soft-delete purge
+                # Cognitive Services soft-delete purge.
+                # Account IDs are resource-group scoped (no /locations/<region>
+                # segment), so resolve the region from the soft-deleted account
+                # list and the resource group from the original resource ID.
                 if [[ "$PURGE_PROTECTED" != "true" ]]; then
-                  LOCATION=$(echo "$RES_ID" | grep -oP '(?<=locations/)[^/]+' || echo "")
+                  LOCATION=$(az cognitiveservices account list-deleted \
+                    --query "[?name=='$RES_NAME'] | [0].location" -o tsv 2>/dev/null || echo "")
+                  RES_RG=$(echo "$RES_ID" | sed -n 's#.*/resourceGroups/\([^/]*\)/.*#\1#p')
                   if [[ -n "$LOCATION" ]]; then
                     az cognitiveservices account purge --name "$RES_NAME" --location "$LOCATION" \
-                      --resource-group "" 2>/dev/null || true
+                      --resource-group "$RES_RG" 2>/dev/null || true
                   fi
                 fi
                 ;;

@@ -268,14 +268,25 @@ jobs:
         run: |
           # Stack-aware validation — checks both the template and the
           # stack-specific flags (--action-on-unmanage, --deny-settings-mode).
-          az stack sub validate \
+          # If Deployment Stacks are unavailable/blocked in the target
+          # subscription, fall back to plain subscription validation so the
+          # deploy step's own legacy fallback path can still run.
+          if ! az stack sub validate \
             --name "${{ matrix.deployment_id }}" \
             --location "${{ steps.params.outputs.location }}" \
             --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
             --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
             --action-on-unmanage deleteAll \
             --deny-settings-mode none \
-            --output json
+            --output json; then
+            echo "::warning::Stack validation unavailable or failed — falling back to az deployment sub validate"
+            az deployment sub validate \
+              --name "${{ matrix.deployment_id }}" \
+              --location "${{ steps.params.outputs.location }}" \
+              --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
+              --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
+              --output json
+          fi
 
       - name: Run Microsoft Defender for DevOps template analyzer
         id: security_scan
@@ -321,30 +332,43 @@ jobs:
           # Determine deploy method: prefer deployment stacks (idempotent destroy)
           # Fall back to az deployment sub create if stacks are unavailable
           DEPLOY_METHOD="stack"
+          # Verbose output goes to a temp file so it does not contaminate the
+          # JSON that downstream jq calls need to parse.
+          VERBOSE_LOG=$(mktemp)
+          trap 'rm -f "$VERBOSE_LOG"' EXIT
 
-          if [[ "$DEPLOY_METHOD" == "stack" ]]; then
-            DEPLOY_OUTPUT=$(az stack sub create \
-              --name "$DEPLOYMENT_ID" \
-              --location "$LOCATION" \
-              --template-file "$DEPLOY_DIR/template.json" \
-              --parameters @"$DEPLOY_DIR/parameters.json" \
-              --action-on-unmanage deleteAll \
-              --deny-settings-mode none \
-              --description "Git-Ape deployment $DEPLOYMENT_ID" \
-              --tags "managedBy=git-ape" "deploymentId=$DEPLOYMENT_ID" \
-              --yes \
-              --verbose \
-              --output json 2>&1)
+          EXIT_CODE=0
+          if DEPLOY_OUTPUT=$(az stack sub create \
+            --name "$DEPLOYMENT_ID" \
+            --location "$LOCATION" \
+            --template-file "$DEPLOY_DIR/template.json" \
+            --parameters @"$DEPLOY_DIR/parameters.json" \
+            --action-on-unmanage deleteAll \
+            --deny-settings-mode none \
+            --description "Git-Ape deployment $DEPLOYMENT_ID" \
+            --tags "managedBy=git-ape" "deploymentId=$DEPLOYMENT_ID" \
+            --yes \
+            --verbose \
+            --output json 2>"$VERBOSE_LOG"); then
+            echo "Stack deploy succeeded"
           else
-            DEPLOY_OUTPUT=$(az deployment sub create \
+            echo "::warning::Stack deploy failed — falling back to az deployment sub create (NOT idempotent for soft-delete / multi-RG)"
+            cat "$VERBOSE_LOG" >&2
+            DEPLOY_METHOD="subscription"
+            > "$VERBOSE_LOG"
+            if ! DEPLOY_OUTPUT=$(az deployment sub create \
               --name "$DEPLOYMENT_ID" \
               --location "$LOCATION" \
               --template-file "$DEPLOY_DIR/template.json" \
               --parameters @"$DEPLOY_DIR/parameters.json" \
-              --output json 2>&1)
+              --output json 2>"$VERBOSE_LOG"); then
+              cat "$VERBOSE_LOG" >&2
+              EXIT_CODE=1
+            fi
           fi
-
-          EXIT_CODE=$?
+          if [[ $EXIT_CODE -ne 0 ]]; then
+            cat "$VERBOSE_LOG" >&2
+          fi
           END_TIME=$(date +%s)
           DURATION=$((END_TIME - START_TIME))
 
@@ -437,20 +461,25 @@ jobs:
               fi
 
               IS_SOFT_DELETABLE="false"
+              IS_PURGE_PROTECTED="false"
               for SD_TYPE in $SOFT_DELETABLE_TYPES; do
                 if [[ "$RES_TYPE" == "$SD_TYPE" ]]; then
                   IS_SOFT_DELETABLE="true"
+                  # Query actual purge protection status for soft-deletable resources
+                  IS_PURGE_PROTECTED=$(az resource show --ids "$RES_ID" \
+                    --query "properties.enablePurgeProtection" -o tsv 2>/dev/null || echo "false")
+                  [[ "$IS_PURGE_PROTECTED" == "true" ]] || IS_PURGE_PROTECTED="false"
                   break
                 fi
               done
 
               MANAGED_RESOURCES=$(echo "$MANAGED_RESOURCES" | jq --arg id "$RES_ID" --arg type "$RES_TYPE" \
-                --arg scope "$RES_SCOPE" --argjson sd "$IS_SOFT_DELETABLE" \
-                '. + [{"id": $id, "type": $type, "scope": $scope, "softDeletable": $sd, "purgeProtected": false}]')
+                --arg scope "$RES_SCOPE" --argjson sd "$IS_SOFT_DELETABLE" --argjson pp "$IS_PURGE_PROTECTED" \
+                '. + [{"id": $id, "type": $type, "scope": $scope, "softDeletable": $sd, "purgeProtected": $pp}]')
             done
 
             # Extract resource groups from managed resources
-            RESOURCE_GROUPS=$(echo "$MANAGED_RESOURCES" | jq -c '[.[].id | capture("/resourceGroups/(?<rg>[^/]+)") | .rg] | unique')
+            RESOURCE_GROUPS=$(echo "$MANAGED_RESOURCES" | jq -c '[.[].id | select(test("/resourceGroups/")) | capture("/resourceGroups/(?<rg>[^/]+)") | .rg] | unique')
           else
             # Fallback: walk deployment operations recursively
             OPS=$(az deployment operation sub list \
@@ -468,16 +497,21 @@ jobs:
               fi
 
               IS_SOFT_DELETABLE="false"
+              IS_PURGE_PROTECTED="false"
               for SD_TYPE in $SOFT_DELETABLE_TYPES; do
                 if [[ "$RES_TYPE" == "$SD_TYPE" ]]; then
                   IS_SOFT_DELETABLE="true"
+                  # Query actual purge protection status for soft-deletable resources
+                  IS_PURGE_PROTECTED=$(az resource show --ids "$RES_ID" \
+                    --query "properties.enablePurgeProtection" -o tsv 2>/dev/null || echo "false")
+                  [[ "$IS_PURGE_PROTECTED" == "true" ]] || IS_PURGE_PROTECTED="false"
                   break
                 fi
               done
 
               MANAGED_RESOURCES=$(echo "$MANAGED_RESOURCES" | jq --arg id "$RES_ID" --arg type "$RES_TYPE" \
-                --arg scope "$RES_SCOPE" --argjson sd "$IS_SOFT_DELETABLE" \
-                '. + [{"id": $id, "type": $type, "scope": $scope, "softDeletable": $sd, "purgeProtected": false}]')
+                --arg scope "$RES_SCOPE" --argjson sd "$IS_SOFT_DELETABLE" --argjson pp "$IS_PURGE_PROTECTED" \
+                '. + [{"id": $id, "type": $type, "scope": $scope, "softDeletable": $sd, "purgeProtected": $pp}]')
             done
 
             # Collect resource groups

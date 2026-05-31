@@ -199,14 +199,25 @@ jobs:
         run: |
           # Stack-aware validation — checks both the template and the
           # stack-specific flags (--action-on-unmanage, --deny-settings-mode).
-          az stack sub validate \
+          # If Deployment Stacks are unavailable/blocked in the target
+          # subscription, fall back to plain subscription validation so the
+          # deploy step's own legacy fallback path can still run.
+          if ! az stack sub validate \
             --name "${{ matrix.deployment_id }}" \
             --location "${{ steps.params.outputs.location }}" \
             --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
             --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
             --action-on-unmanage deleteAll \
             --deny-settings-mode none \
-            --output json
+            --output json; then
+            echo "::warning::Stack validation unavailable or failed — falling back to az deployment sub validate"
+            az deployment sub validate \
+              --name "${{ matrix.deployment_id }}" \
+              --location "${{ steps.params.outputs.location }}" \
+              --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
+              --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
+              --output json
+          fi
 
       - name: Run Microsoft Defender for DevOps template analyzer
         id: security_scan
