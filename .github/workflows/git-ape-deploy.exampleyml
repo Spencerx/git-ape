@@ -257,29 +257,35 @@ jobs:
           VERBOSE_LOG=$(mktemp)
           trap 'rm -f "$VERBOSE_LOG"' EXIT
 
-          if [[ "$DEPLOY_METHOD" == "stack" ]]; then
-            DEPLOY_OUTPUT=$(az stack sub create \
-              --name "$DEPLOYMENT_ID" \
-              --location "$LOCATION" \
-              --template-file "$DEPLOY_DIR/template.json" \
-              --parameters @"$DEPLOY_DIR/parameters.json" \
-              --action-on-unmanage deleteAll \
-              --deny-settings-mode none \
-              --description "Git-Ape deployment $DEPLOYMENT_ID" \
-              --tags "managedBy=git-ape" "deploymentId=$DEPLOYMENT_ID" \
-              --yes \
-              --verbose \
-              --output json 2>"$VERBOSE_LOG")
+          EXIT_CODE=0
+          if DEPLOY_OUTPUT=$(az stack sub create \
+            --name "$DEPLOYMENT_ID" \
+            --location "$LOCATION" \
+            --template-file "$DEPLOY_DIR/template.json" \
+            --parameters @"$DEPLOY_DIR/parameters.json" \
+            --action-on-unmanage deleteAll \
+            --deny-settings-mode none \
+            --description "Git-Ape deployment $DEPLOYMENT_ID" \
+            --tags "managedBy=git-ape" "deploymentId=$DEPLOYMENT_ID" \
+            --yes \
+            --verbose \
+            --output json 2>"$VERBOSE_LOG"); then
+            echo "Stack deploy succeeded"
           else
-            DEPLOY_OUTPUT=$(az deployment sub create \
+            echo "::warning::Stack deploy failed — falling back to az deployment sub create (NOT idempotent for soft-delete / multi-RG)"
+            cat "$VERBOSE_LOG" >&2
+            DEPLOY_METHOD="subscription"
+            > "$VERBOSE_LOG"
+            if ! DEPLOY_OUTPUT=$(az deployment sub create \
               --name "$DEPLOYMENT_ID" \
               --location "$LOCATION" \
               --template-file "$DEPLOY_DIR/template.json" \
               --parameters @"$DEPLOY_DIR/parameters.json" \
-              --output json 2>"$VERBOSE_LOG")
+              --output json 2>"$VERBOSE_LOG"); then
+              cat "$VERBOSE_LOG" >&2
+              EXIT_CODE=1
+            fi
           fi
-
-          EXIT_CODE=$?
           if [[ $EXIT_CODE -ne 0 ]]; then
             cat "$VERBOSE_LOG" >&2
           fi
@@ -375,16 +381,21 @@ jobs:
               fi
 
               IS_SOFT_DELETABLE="false"
+              IS_PURGE_PROTECTED="false"
               for SD_TYPE in $SOFT_DELETABLE_TYPES; do
                 if [[ "$RES_TYPE" == "$SD_TYPE" ]]; then
                   IS_SOFT_DELETABLE="true"
+                  # Query actual purge protection status for soft-deletable resources
+                  IS_PURGE_PROTECTED=$(az resource show --ids "$RES_ID" \
+                    --query "properties.enablePurgeProtection" -o tsv 2>/dev/null || echo "false")
+                  [[ "$IS_PURGE_PROTECTED" == "true" ]] || IS_PURGE_PROTECTED="false"
                   break
                 fi
               done
 
               MANAGED_RESOURCES=$(echo "$MANAGED_RESOURCES" | jq --arg id "$RES_ID" --arg type "$RES_TYPE" \
-                --arg scope "$RES_SCOPE" --argjson sd "$IS_SOFT_DELETABLE" \
-                '. + [{"id": $id, "type": $type, "scope": $scope, "softDeletable": $sd, "purgeProtected": false}]')
+                --arg scope "$RES_SCOPE" --argjson sd "$IS_SOFT_DELETABLE" --argjson pp "$IS_PURGE_PROTECTED" \
+                '. + [{"id": $id, "type": $type, "scope": $scope, "softDeletable": $sd, "purgeProtected": $pp}]')
             done
 
             # Extract resource groups from managed resources
@@ -406,16 +417,21 @@ jobs:
               fi
 
               IS_SOFT_DELETABLE="false"
+              IS_PURGE_PROTECTED="false"
               for SD_TYPE in $SOFT_DELETABLE_TYPES; do
                 if [[ "$RES_TYPE" == "$SD_TYPE" ]]; then
                   IS_SOFT_DELETABLE="true"
+                  # Query actual purge protection status for soft-deletable resources
+                  IS_PURGE_PROTECTED=$(az resource show --ids "$RES_ID" \
+                    --query "properties.enablePurgeProtection" -o tsv 2>/dev/null || echo "false")
+                  [[ "$IS_PURGE_PROTECTED" == "true" ]] || IS_PURGE_PROTECTED="false"
                   break
                 fi
               done
 
               MANAGED_RESOURCES=$(echo "$MANAGED_RESOURCES" | jq --arg id "$RES_ID" --arg type "$RES_TYPE" \
-                --arg scope "$RES_SCOPE" --argjson sd "$IS_SOFT_DELETABLE" \
-                '. + [{"id": $id, "type": $type, "scope": $scope, "softDeletable": $sd, "purgeProtected": false}]')
+                --arg scope "$RES_SCOPE" --argjson sd "$IS_SOFT_DELETABLE" --argjson pp "$IS_PURGE_PROTECTED" \
+                '. + [{"id": $id, "type": $type, "scope": $scope, "softDeletable": $sd, "purgeProtected": $pp}]')
             done
 
             # Collect resource groups

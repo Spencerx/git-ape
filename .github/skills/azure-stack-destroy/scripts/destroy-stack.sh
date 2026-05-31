@@ -179,7 +179,8 @@ if [[ -n "$STACK_ID" ]]; then
                     --bypass-stack-out-of-sync-error true \
                     --yes > "$STACK_DELETE_LOG" 2>&1 &
                 STACK_BG_PID=$!
-                disown "$STACK_BG_PID" 2>/dev/null || true
+                # Do NOT disown — we need `wait` to retrieve the exit code.
+                # nohup already insulates against HUP signals.
 
                 echo -e "${BLUE}⏳ Polling $MANAGED_RG_COUNT managed resource group(s) (timeout: ${POLL_TIMEOUT}s)...${NC}"
                 POLL_START=$(date +%s)
@@ -199,8 +200,8 @@ if [[ -n "$STACK_ID" ]]; then
                         fi
                         # If the bg process already failed, surface it early
                         if ! kill -0 "$STACK_BG_PID" 2>/dev/null; then
-                            wait "$STACK_BG_PID" 2>/dev/null || true
-                            BG_EXIT=$?
+                            BG_EXIT=0
+                            wait "$STACK_BG_PID" 2>/dev/null || BG_EXIT=$?
                             if [[ $BG_EXIT -ne 0 ]]; then
                                 EXISTS=$(az group exists --name "$RG" 2>/dev/null || echo "true")
                                 if [[ "$EXISTS" == "true" ]]; then
