@@ -559,8 +559,19 @@ jobs:
           # task results, "Running benchmark:") streams to the runner log.
           # --model overrides the spec's config.model so we can fan out the
           # same eval suite across multiple models.
+          #
           # --judge-model decouples the LLM-as-judge from the executor model
-          # so quality scores are always judged by claude-sonnet-4.6.
+          # and pins it to claude-opus-4.7 for TWO reasons:
+          #   1. No self-grading bias — opus-4.7 is NOT in any matrix tier
+          #      (pilot: sonnet-4.6, gpt-5.4, gpt-5-codex, opus-4.6;
+          #      expanded: sonnet-4.6, gpt-5-codex), so no runner leg is
+          #      ever judged by its own model.
+          #   2. Judge capability ≥ every runner — opus-4.7 is chosen as a
+          #      higher-capability judge than the runner mix to reduce
+          #      ceiling effects when scoring the strongest runners.
+          # If a future tier ever adds opus-4.7 as a runner, the judge must
+          # be re-pinned to a model that is still outside the new roster.
+          #
           # --suggest --recommend appends outcome-tied recommendations.
           max_attempts=3
           attempt=0
@@ -572,7 +583,7 @@ jobs:
             # shellcheck disable=SC2086
             waza run "${spec}" \
               --model "${{ matrix.model }}" \
-              --judge-model "claude-sonnet-4.6" \
+              --judge-model "claude-opus-4.7" \
               --suggest \
               --recommend \
               ${extra_flags} \
@@ -915,7 +926,7 @@ jobs:
               '',
               '> **Legend:** Models flagged `baseline: true` in `.github/evals/manifest.yaml` (currently: `' +
                 (Array.from(baselineModels).join('`, `') || 'none') +
-                '`) run with `--baseline` (A/B mode) to cap quota. All other models run standard. Judge model is fixed at `claude-sonnet-4.6` across all legs.',
+                '`) run with `--baseline` (A/B mode) to cap quota. All other models run standard. Judge model is fixed at `claude-opus-4.7` across all legs.',
               '',
             ].filter((line) => line !== null).join('\n');
 

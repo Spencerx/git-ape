@@ -99,7 +99,7 @@ Git-Ape can run in two modes. Detect which mode is active and adapt behavior acc
 | Validation | Run locally | `git-ape-plan.yml` runs on PR, posts what-if as comment |
 | Confirmation | Ask user interactively | PR approval = confirmation |
 | Deployment | Execute immediately | `git-ape-deploy.yml` runs on merge to main |
-| Destroy | Execute after confirmation | PR sets `metadata.json` status to `destroy-requested` → merge triggers `git-ape-destroy.yml` |
+| Destroy | Execute via `az stack sub delete --action-on-unmanage deleteAll` after confirmation, then purge soft-deletables | PR sets `metadata.json` status to `destroy-requested` → merge triggers `git-ape-destroy.yml` (same stack-based flow + soft-delete purge) |
 | Results | Display in chat | Posted as PR/issue comment + state committed to repo |
 
 ## Your Role
@@ -356,12 +356,13 @@ The deployment plan MUST start with a clear "Target Environment" table:
 **Delegate to:** `azure-resource-deployer`
 
 The deployer will:
-- Execute the ARM template as a **subscription-level deployment** (`az deployment sub create`)
+- Execute the ARM template as a **subscription-scoped Deployment Stack** (`az stack sub create --action-on-unmanage deleteAll`) so destroy is idempotent across resource groups and subscription scope. The CLI fallback (`az deployment sub create`) is used only if stacks are unavailable.
 - The ARM template includes resource group creation — everything deploys atomically
 - Monitor deployment progress in real-time
 - Handle any deployment failures
 - Verify resource creation via Azure Resource Graph
 - Capture deployment outputs (resource IDs, endpoints, etc.)
+- Capture the **stack ID** plus every managed resource into `state.json` (extended schema: `stackId`, `deployMethod`, `managedResources[]`, `resourceGroups[]`, `subscriptions[]`, `externalReferences[]`) so the destroy path can find them later — including soft-deletable types (Key Vault, Cognitive Services, App Configuration, API Management, ML Workspaces, Recovery Services Vaults).
 
 **Deployment Monitoring:** Always poll deployment state every **30 seconds** using `sleep 30` between checks. No exponential backoff — use a fixed 30-second interval for all resources regardless of type or expected duration. Check both the top-level deployment and nested deployment statuses on every poll.
 
@@ -388,7 +389,16 @@ Run post-deployment validation:
   ```
   To destroy this deployment and delete all its resources, use Git-Ape:
   > @git-ape destroy deployment {deployment-id}
-  
+
+  Locally, this invokes the `azure-stack-destroy` skill:
+  > .github/skills/azure-stack-destroy/scripts/destroy-stack.sh --deployment-id {deployment-id}
+  > # or PowerShell:
+  > .github/skills/azure-stack-destroy/scripts/destroy-stack.ps1 -DeploymentId {deployment-id}
+
+  Which uses `az stack sub delete --action-on-unmanage deleteAll --bypass-stack-out-of-sync-error true`
+  (single command, idempotent across resource groups and subscription scope) and
+  purges any soft-deletable resources that are not purge-protected.
+
   Or via GitHub (if using CI/CD):
   > Create a PR that sets `metadata.json` status to `destroy-requested`, then merge after approval
   ```
