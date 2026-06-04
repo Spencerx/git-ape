@@ -119,6 +119,10 @@ fi
 STACK_DELETED="false"
 RG_DELETED="false"
 ALREADY_GONE="true"
+# Tracks whether a stack/RG delete command was actually invoked. Used to
+# distinguish a partial failure (attempted but did not complete →
+# partially-destroyed) from the catch-all destroy-failed, mirroring CI.
+DELETE_ATTEMPTED="false"
 START_TIME=$(date +%s)
 
 # Primary path: stack delete
@@ -140,6 +144,7 @@ if [[ -n "$STACK_ID" ]]; then
     STACK_EXISTS=$(az stack sub show --name "$DEPLOYMENT_ID" --query "id" -o tsv 2>/dev/null || echo "")
     if [[ -n "$STACK_EXISTS" ]]; then
         ALREADY_GONE="false"
+        DELETE_ATTEMPTED="true"
         if [[ "$WAIT_FLAG" == "true" ]]; then
             echo -e "${BLUE}🗑️  Deleting deployment stack (sync wait): $DEPLOYMENT_ID${NC}"
             # --bypass-stack-out-of-sync-error: a destroy run is one-shot; we
@@ -244,6 +249,7 @@ if [[ -z "$STACK_ID" && -n "$RG_NAME" ]]; then
     RG_EXISTS=$(az group exists --name "$RG_NAME" 2>/dev/null || echo "false")
     if [[ "$RG_EXISTS" == "true" ]]; then
         ALREADY_GONE="false"
+        DELETE_ATTEMPTED="true"
         echo -e "${BLUE}🗑️  Deleting resource group: $RG_NAME${NC}"
         if az group delete --name "$RG_NAME" --yes 2>&1; then
             RG_DELETED="true"
@@ -330,6 +336,12 @@ elif [[ "$STACK_DELETED" == "true" || "$RG_DELETED" == "true" ]]; then
     else
         STATUS="destroyed"
     fi
+elif [[ "$DELETE_ATTEMPTED" == "true" ]]; then
+    # A stack/RG existed and a delete was invoked, but it did not complete
+    # (e.g. fast-mode poll timeout or a failed delete command). Some resources
+    # may remain. Mirrors CI: stack/RG delete status == failed →
+    # partially-destroyed (distinct from the destroy-failed catch-all).
+    STATUS="partially-destroyed"
 else
     STATUS="destroy-failed"
 fi

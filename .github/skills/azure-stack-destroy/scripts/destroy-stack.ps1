@@ -136,12 +136,17 @@ if (-not $Yes) {
 $StackDeleted = $false
 $RgDeleted    = $false
 $AlreadyGone  = $true
+# Tracks whether a stack/RG delete command was actually invoked. Used to
+# distinguish a partial failure (attempted but did not complete ->
+# partially-destroyed) from the catch-all destroy-failed, mirroring CI.
+$DeleteAttempted = $false
 $StartTime    = Get-Date
 
 if ($StackId) {
     $stackExists = az stack sub show --name $DeploymentId --query 'id' -o tsv 2>$null
     if ($stackExists) {
         $AlreadyGone = $false
+        $DeleteAttempted = $true
         if ($Wait) {
             Write-Color "🗑️  Deleting deployment stack (sync wait): $DeploymentId" Blue
             # --bypass-stack-out-of-sync-error: a destroy run is one-shot; we
@@ -248,6 +253,7 @@ if (-not $StackId -and $RgName) {
     $rgExists = az group exists --name $RgName 2>$null
     if ($rgExists -eq 'true') {
         $AlreadyGone = $false
+        $DeleteAttempted = $true
         Write-Color "🗑️  Deleting resource group: $RgName" Blue
         az group delete --name $RgName --yes
         if ($LASTEXITCODE -eq 0) { $RgDeleted = $true }
@@ -324,6 +330,12 @@ $Status = if ($AlreadyGone) {
     'already-destroyed'
 } elseif ($StackDeleted -or $RgDeleted) {
     if ($RetainedCount -gt 0) { 'retained-soft-deleted' } else { 'destroyed' }
+} elseif ($DeleteAttempted) {
+    # A stack/RG existed and a delete was invoked, but it did not complete
+    # (e.g. fast-mode poll timeout or a failed delete command). Some resources
+    # may remain. Mirrors CI: stack/RG delete status == failed ->
+    # partially-destroyed (distinct from the destroy-failed catch-all).
+    'partially-destroyed'
 } else {
     'destroy-failed'
 }
