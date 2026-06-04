@@ -625,15 +625,26 @@ jobs:
       - name: Post deployment result
         if: always() && github.event_name == 'issue_comment'
         uses: actions/github-script@v8
+        env:
+          # Pass all repo-controlled / command-derived values via env so they are
+          # read with process.env and never interpolated into the script body
+          # (prevents JavaScript injection from crafted values).
+          DEPLOYMENT_ID: ${{ matrix.deployment_id }}
+          DEPLOY_STATUS: ${{ steps.deploy.outputs.deploy_status }}
+          DEPLOY_DURATION: ${{ steps.deploy.outputs.deploy_duration }}
+          DEPLOY_OUTPUTS: ${{ steps.deploy.outputs.deploy_outputs }}
+          DEPLOY_RESOURCES: ${{ steps.tests.outputs.resources }}
+          TEST_ENDPOINTS: ${{ steps.tests.outputs.test_endpoints }}
+          DEPLOY_ERROR: ${{ steps.deploy.outputs.deploy_error }}
         with:
           script: |
-            const deploymentId = '${{ matrix.deployment_id }}';
-            const status = '${{ steps.deploy.outputs.deploy_status }}' || 'failed';
-            const duration = '${{ steps.deploy.outputs.deploy_duration }}';
-            const outputs = `${{ steps.deploy.outputs.deploy_outputs }}`;
-            const resources = `${{ steps.tests.outputs.resources }}`;
-            const testEndpoints = `${{ steps.tests.outputs.test_endpoints }}`;
-            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`;
+            const deploymentId = process.env.DEPLOYMENT_ID;
+            const status = process.env.DEPLOY_STATUS || 'failed';
+            const duration = process.env.DEPLOY_DURATION;
+            const outputs = process.env.DEPLOY_OUTPUTS || '';
+            const resources = process.env.DEPLOY_RESOURCES || '';
+            const testEndpoints = process.env.TEST_ENDPOINTS || '';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             let comment = `## Git-Ape Deploy: \`${deploymentId}\`\n\n`;
 
@@ -661,7 +672,7 @@ jobs:
             } else {
               comment += `### ❌ Deployment Failed\n\n`;
               comment += `- **Workflow Run:** [View logs](${runUrl})\n\n`;
-              const error = `${{ steps.deploy.outputs.deploy_error }}`;
+              const error = process.env.DEPLOY_ERROR || '';
               if (error) {
                 comment += `\`\`\`\n${error.substring(0, 2000)}\n\`\`\`\n\n`;
               }

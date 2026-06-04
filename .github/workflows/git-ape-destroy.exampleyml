@@ -51,19 +51,31 @@ jobs:
 
       - name: Find destroy-requested deployments
         id: find
+        env:
+          # Pass dispatch inputs via env so they are never expanded by the shell
+          # (prevents command injection from crafted workflow_dispatch values).
+          INPUT_CONFIRM: ${{ inputs.confirm }}
+          INPUT_DEPLOYMENT_ID: ${{ inputs.deployment_id }}
         run: |
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            CONFIRM="${{ inputs.confirm }}"
-            if [[ "$CONFIRM" != "destroy" ]]; then
+            if [[ "$INPUT_CONFIRM" != "destroy" ]]; then
               echo "::error::Confirmation must be 'destroy'"
               echo "has_destroys=false" >> "$GITHUB_OUTPUT"
               echo "deployment_ids=[]" >> "$GITHUB_OUTPUT"
               exit 1
             fi
-            DEPLOYMENT_IDS='["${{ inputs.deployment_id }}"]'
+            # Validate the deployment ID against the allowed charset for
+            # deployment directory names before using it anywhere.
+            if [[ ! "$INPUT_DEPLOYMENT_ID" =~ ^[A-Za-z0-9._-]+$ ]]; then
+              echo "::error::Invalid deployment_id (allowed: A-Z a-z 0-9 . _ -)"
+              echo "has_destroys=false" >> "$GITHUB_OUTPUT"
+              echo "deployment_ids=[]" >> "$GITHUB_OUTPUT"
+              exit 1
+            fi
+            DEPLOYMENT_IDS=$(jq -cn --arg id "$INPUT_DEPLOYMENT_ID" '[$id]')
             echo "has_destroys=true" >> "$GITHUB_OUTPUT"
             echo "deployment_ids=$DEPLOYMENT_IDS" >> "$GITHUB_OUTPUT"
-            echo "Manual destroy requested: ${{ inputs.deployment_id }}"
+            echo "Manual destroy requested: $INPUT_DEPLOYMENT_ID"
             exit 0
           fi
 
