@@ -1,8 +1,9 @@
 ---
 name: azure-policy-advisor
 description: "Map ARM templates to Azure Policy definitions and initiatives. Queries subscription assignments via `az policy assignment list`, identifies unassigned built-in and custom policies (CIS, NIST, FedRAMP), and emits a two-part report: template-fixable gaps (Part 1) and subscription-level policy assignments (Part 2). INVOKES: az policy assignment list, az policy set-definition list, microsoft_docs_search, microsoft_docs_fetch."
-argument-hint: "ARM template JSON or resource types to assess, and optionally a compliance framework (CIS, NIST, general)"
-user-invocable: true
+metadata:
+  argument-hint: "ARM template JSON or resource types to assess, and optionally a compliance framework (CIS, NIST, general)"
+  user-invocable: true
 ---
 
 # Azure Policy Advisor
