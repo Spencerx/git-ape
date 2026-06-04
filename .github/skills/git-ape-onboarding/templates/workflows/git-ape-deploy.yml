@@ -170,12 +170,16 @@ jobs:
           echo "::endgroup::"
 
       - name: Validate before deploy (stack)
+        env:
+          # location comes from parameters.json (attacker-controllable) — route it
+          # through env so it can't be inlined into the run script (injection).
+          LOCATION: ${{ steps.params.outputs.location }}
         run: |
           echo "::group::Template validation"
-          echo "[$(date -u +%H:%M:%S)] Validating stack '$DEPLOYMENT_ID' in '${{ steps.params.outputs.location }}'"
+          echo "[$(date -u +%H:%M:%S)] Validating stack '$DEPLOYMENT_ID' in '$LOCATION'"
           az stack sub validate \
             --name "$DEPLOYMENT_ID" \
-            --location "${{ steps.params.outputs.location }}" \
+            --location "$LOCATION" \
             --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
             --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
             --action-on-unmanage deleteAll \
@@ -234,15 +238,21 @@ jobs:
 
       - name: Deploy to Azure (Deployment Stack)
         id: deploy
+        env:
+          # location/project/environment come from parameters.json (attacker-
+          # controllable) — route through env to prevent run-script injection.
+          LOCATION: ${{ steps.params.outputs.location }}
+          PROJECT: ${{ steps.params.outputs.project }}
+          ENVIRONMENT: ${{ steps.params.outputs.environment }}
         run: |
           STACK_NAME="$DEPLOYMENT_ID"
           echo "::group::Stack deployment"
           echo "[$(date -u +%H:%M:%S)] 🚀 Starting stack deployment: $STACK_NAME"
-          echo "    location    : ${{ steps.params.outputs.location }}"
+          echo "    location    : $LOCATION"
           echo "    template    : ${{ steps.params.outputs.deploy_dir }}/template.json"
           echo "    parameters  : ${{ steps.params.outputs.deploy_dir }}/parameters.json"
-          echo "    project     : ${{ steps.params.outputs.project }}"
-          echo "    environment : ${{ steps.params.outputs.environment }}"
+          echo "    project     : $PROJECT"
+          echo "    environment : $ENVIRONMENT"
           echo "    prior stack : ${{ steps.pre_state.outputs.stack_existed }}"
           START_TIME=$(date +%s)
 
@@ -255,7 +265,7 @@ jobs:
           set +e
           DEPLOY_OUTPUT=$(az stack sub create \
             --name "$STACK_NAME" \
-            --location "${{ steps.params.outputs.location }}" \
+            --location "$LOCATION" \
             --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
             --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
             --action-on-unmanage deleteAll \
@@ -395,6 +405,10 @@ jobs:
       - name: Rollback on failure
         id: rollback
         if: failure() && steps.deploy.outcome == 'failure'
+        env:
+          # location comes from parameters.json (attacker-controllable) — route it
+          # through env to prevent run-script injection.
+          LOCATION: ${{ steps.params.outputs.location }}
         run: |
           STACK_NAME="$DEPLOYMENT_ID"
           STACK_EXISTED="${{ steps.pre_state.outputs.stack_existed }}"
@@ -417,7 +431,7 @@ jobs:
             set +e
             az stack sub create \
               --name "$STACK_NAME" \
-              --location "${{ steps.params.outputs.location }}" \
+              --location "$LOCATION" \
               --template-file /tmp/rollback/template.json \
               --parameters @/tmp/rollback/parameters.json \
               --action-on-unmanage deleteAll \
@@ -472,6 +486,10 @@ jobs:
           # or inject commands (GitHub Actions hardening).
           STACK_ID: ${{ steps.deploy.outputs.stack_id }}
           MANAGED_RESOURCES: ${{ steps.deploy.outputs.managed_resources }}
+          # location/project/environment come from parameters.json (attacker-controllable).
+          LOCATION: ${{ steps.params.outputs.location }}
+          PROJECT: ${{ steps.params.outputs.project }}
+          ENVIRONMENT: ${{ steps.params.outputs.environment }}
         run: |
           DEPLOY_DIR="${{ steps.params.outputs.deploy_dir }}"
           STATUS="${{ steps.deploy.outputs.deploy_status || 'failed' }}"
@@ -495,9 +513,9 @@ jobs:
             --arg status "$STATUS" \
             --arg duration "${{ steps.deploy.outputs.deploy_duration }}" \
             --arg subscription "${{ vars.AZURE_SUBSCRIPTION_ID }}" \
-            --arg location "${{ steps.params.outputs.location }}" \
-            --arg project "${{ steps.params.outputs.project }}" \
-            --arg environment "${{ steps.params.outputs.environment }}" \
+            --arg location "$LOCATION" \
+            --arg project "$PROJECT" \
+            --arg environment "$ENVIRONMENT" \
             --arg resourceGroup "${{ steps.deploy.outputs.resource_group }}" \
             --arg stackId "$STACK_ID" \
             --argjson managedResources "$MANAGED" \

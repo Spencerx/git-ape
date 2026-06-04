@@ -152,9 +152,13 @@ jobs:
 
       - name: Estimate deployment cost
         id: cost
+        env:
+          # location comes from parameters.json (attacker-controllable) — route it
+          # through env to prevent run-script injection.
+          LOCATION: ${{ steps.params.outputs.location }}
         run: |
           TEMPLATE="${{ steps.params.outputs.deploy_dir }}/template.json"
-          REGION="${{ steps.params.outputs.location }}"
+          REGION="$LOCATION"
           COST_TABLE="| Resource Type | SKU | Est. Monthly |\n|---|---|---|\n"
           TOTAL=0
           COST_NOTES=""
@@ -404,6 +408,10 @@ jobs:
       - name: Validate template (stack)
         id: validate
         if: steps.azure_login.outcome == 'success'
+        env:
+          # location comes from parameters.json (attacker-controllable) — route it
+          # through env to prevent run-script injection.
+          LOCATION: ${{ steps.params.outputs.location }}
         run: |
           echo "### Validating deployment stack..."
 
@@ -411,7 +419,7 @@ jobs:
           # verifies stack-specific settings (action-on-unmanage, deny settings).
           RESULT=$(az stack sub validate \
             --name "$DEPLOYMENT_ID" \
-            --location "${{ steps.params.outputs.location }}" \
+            --location "$LOCATION" \
             --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
             --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
             --action-on-unmanage deleteAll \
@@ -440,6 +448,10 @@ jobs:
       - name: Run what-if analysis
         id: whatif
         if: steps.azure_login.outcome == 'success'
+        env:
+          # location comes from parameters.json (attacker-controllable) — route it
+          # through env to prevent run-script injection.
+          LOCATION: ${{ steps.params.outputs.location }}
         run: |
           # NOTE: Deployment Stacks don't yet support what-if
           # (see https://learn.microsoft.com/azure/azure-resource-manager/bicep/deployment-stacks#known-issues).
@@ -452,7 +464,7 @@ jobs:
           # if validation failed, what-if may surface additional context.
           set +e
           WHATIF_OUTPUT=$(az deployment sub what-if \
-            --location "${{ steps.params.outputs.location }}" \
+            --location "$LOCATION" \
             --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
             --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
             --no-prompt 2>&1)
@@ -735,7 +747,6 @@ jobs:
               comment += `### Next Steps\n\n`;
               comment += `1. Review the plan above\n`;
               comment += `2. Approve and merge this PR to trigger deployment\n`;
-              comment += `3. Or comment \`/deploy\` to deploy from this branch before merging\n`;
             }
 
             const { data: comments } = await github.rest.issues.listComments({
