@@ -335,17 +335,22 @@ jobs:
           steps.check.outputs.stack_exists != 'true' &&
           steps.check.outputs.rg_exists == 'true' &&
           steps.check.outputs.sub_count != '0'
+        env:
+          SUB_RESOURCES: ${{ steps.check.outputs.sub_resources }}
         run: |
           echo "🗑️ Deleting subscription-scoped resources first..."
           FAILED=0
 
-          echo '${{ steps.check.outputs.sub_resources }}' | jq -r '.[].id' | while read -r RESOURCE_ID; do
+          # Use process substitution so the FAILED counter survives. A piped
+          # `... | while read` would run the loop body in a subshell, and the
+          # incremented counter would be lost when the subshell exits.
+          while read -r RESOURCE_ID; do
             echo "  Deleting: $RESOURCE_ID"
             if ! az resource delete --ids "$RESOURCE_ID" 2>&1; then
               echo "::warning::Failed to delete $RESOURCE_ID"
               FAILED=$((FAILED + 1))
             fi
-          done
+          done < <(echo "$SUB_RESOURCES" | jq -r '.[].id')
 
           if [[ "$FAILED" -gt 0 ]]; then
             echo "::warning::$FAILED subscription-scoped resource(s) failed to delete"
