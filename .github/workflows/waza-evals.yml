@@ -848,7 +848,7 @@ jobs:
               '',
               '> **Legend:** Models flagged `baseline: true` in `.github/evals/manifest.yaml` (currently: `' +
                 (Array.from(baselineModels).join('`, `') || 'none') +
-                '`) run with `--baseline` (A/B mode) to cap quota. All other models run standard. Judge model is fixed at `claude-sonnet-4.6` across all legs.',
+                '`) run with `--baseline` (A/B mode) to cap quota. All other models run standard. Judge model is fixed at `claude-opus-4.7` across all legs.',
               '',
             ].filter((line) => line !== null).join('\n');
 

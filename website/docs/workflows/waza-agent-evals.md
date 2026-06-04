@@ -565,9 +565,17 @@ jobs:
           # fallback path (no JSON → use rawMd) will surface that notice
           # instead of polluting the score table.
           #
-          # --judge-model is decoupled from the executor model so quality
-          # scores are always judged by claude-opus-4.7 even if we ever
-          # add per-agent model overrides.
+          # --judge-model is decoupled from the executor model and pinned
+          # to claude-opus-4.7 for TWO reasons:
+          #   1. No self-grading bias — opus-4.7 is NOT in any runner
+          #      roster (this workflow currently fixes the runner to
+          #      sonnet-4.6, but the rule holds: judge is always outside
+          #      whatever set of models we ever fan runners across).
+          #   2. Judge capability ≥ runner — opus-4.7 is chosen as a
+          #      higher-capability judge than sonnet-4.6 so quality scores
+          #      have headroom and aren't capped by a same-tier judge.
+          # If we ever add per-agent model overrides AND opus-4.7 lands in
+          # a runner roster, re-pin the judge to a model still outside it.
           max_attempts=3
           attempt=0
           rc=0
