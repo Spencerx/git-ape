@@ -121,33 +121,47 @@ Before deploying, verify:
 
 ### 2. Execute Deployment
 
-Use Azure MCP `deploy` service or Azure CLI:
+**Always deploy as a subscription-scoped Deployment Stack.** Stacks track every managed resource (across resource groups and subscription scope) and make destroy idempotent — a single `az stack sub delete --action-on-unmanage deleteAll` removes everything the stack owns, regardless of resource scope.
 
-**Option A: Azure MCP (Preferred)**
-```
-Use mcp_azure_mcp_search with "deploy" intent to execute template deployment
-- Set deployment name: "git-ape-{timestamp}"
-- Set mode: "Incremental" (default) or "Complete" (if user specified)
-- Monitor deployment with progress updates
-```
+> **Single source of truth:** the deploy command, fallback handling, state.json writer, soft-delete classification, and Key Vault purge-protection detection all live in the [`azure-stack-deploy`](../skills/azure-stack-deploy/SKILL.md) skill. Both bash and PowerShell implementations are provided.
 
-**Option B: Azure CLI (Fallback)**
+**Pre-flight: validate the stack before deploying**
 
-**Always use subscription-level deployment** — the ARM template includes resource group creation, so we deploy at subscription scope:
+Use `az stack sub validate` (not `az deployment sub validate`) so the validation also checks the stack-specific flags (`--action-on-unmanage`, `--deny-settings-mode`) — not just the template:
 
 ```bash
-# Subscription-level deployment (creates RG + all resources atomically)
-az deployment sub create \
+az stack sub validate \
   --name "{deployment-id}" \
   --location {location} \
   --template-file {template.json} \
   --parameters @{parameters.json} \
+  --action-on-unmanage deleteAll \
+  --deny-settings-mode none \
   --output json
 ```
 
-**DO NOT use `az deployment group create`** — our templates always include the resource group as a resource. Subscription-level deployment handles everything in one command.
+**Invoke the deploy skill**
 
-Capture the deployment operation ID for tracking.
+```bash
+# Bash
+.github/skills/azure-stack-deploy/scripts/deploy-stack.sh \
+  --deployment-id "{deployment-id}"
+
+# PowerShell
+.github/skills/azure-stack-deploy/scripts/deploy-stack.ps1 `
+  -DeploymentId "{deployment-id}"
+```
+
+The skill:
+- Calls `az stack sub create --action-on-unmanage deleteAll --deny-settings-mode none --description "Git-Ape deployment {id}" --tags managedBy=git-ape deploymentId={id} --yes --verbose`
+- Falls back to `az deployment sub create` only if the stack call fails (warns the user — fallback path does NOT solve soft-delete / multi-RG / sub-scope idempotency)
+- On any failure, dumps the per-operation failure list inline so the root cause is immediately visible
+- On success, captures the `stackId`, classifies every managed resource (type, scope, soft-deletable, purge-protected), and writes the extended `state.json` (schemaVersion 1.0)
+- Updates `metadata.json` with `status: "succeeded"`, `deployMethod`, and `resourceGroups[]`
+
+Pass `--no-fallback` (bash) / `-NoFallback` (pwsh) when the user explicitly wants to fail loudly instead of accepting the legacy path.
+
+**DO NOT use `az deployment group create`** — our templates always include the resource group as a resource. Subscription scope handles everything in one command.
 
 ### 3. Monitor Progress
 
@@ -175,15 +189,27 @@ Status updates:
 **Monitoring Commands:**
 
 ```bash
-# Check deployment status (subscription-level)
+# Stack path — check stack provisioning state
+az stack sub show \
+  --name {deployment-id} \
+  --query "provisioningState" \
+  --output tsv
+
+# Stack path — list managed resources (post-deploy or in-progress)
+az stack sub show \
+  --name {deployment-id} \
+  --query "resources[].{Id:id, Status:status}" \
+  --output table
+
+# Fallback path — subscription deployment
 az deployment sub show \
-  --name {deployment-name} \
+  --name {deployment-id} \
   --query "properties.provisioningState" \
   --output tsv
 
-# Get deployment operations (detailed resource status)
+# Fallback path — deployment operations (detailed resource status)
 az deployment operation sub list \
-  --name {deployment-name} \
+  --name {deployment-id} \
   --query "[].{Resource:properties.targetResource.resourceName, Type:properties.targetResource.resourceType, Status:properties.provisioningState}" \
   --output table
 ```
@@ -219,13 +245,18 @@ Use mcp_azure_mcp_search to query deployed resources and verify:
 
 ### 5. Capture Deployment Outputs
 
-Extract and report deployment outputs (defined in ARM template `outputs` section):
+Extract and report deployment outputs:
 
 ```bash
-# Get deployment outputs
-az deployment group show \
-  --name {deployment-name} \
-  --resource-group {rg-name} \
+# Stack path — outputs are on the stack itself
+az stack sub show \
+  --name {deployment-id} \
+  --query "outputs" \
+  --output json
+
+# Fallback path — subscription deployment outputs
+az deployment sub show \
+  --name {deployment-id} \
   --query "properties.outputs" \
   --output json
 ```
@@ -237,7 +268,25 @@ Common outputs to capture:
 - Managed identity principal IDs
 - Dashboard/monitoring URLs
 
-### 6. Report Deployment Results
+### 6. Verify `state.json` was written
+
+The [`azure-stack-deploy`](../skills/azure-stack-deploy/SKILL.md) skill writes `state.json` (schemaVersion 1.0) and updates `metadata.json` with `deployMethod` and `resourceGroups[]` as part of step 2. The agent's job here is to confirm the write succeeded and surface its contents for the user.
+
+```bash
+DEPLOYMENT_ID="{deployment-id}"
+DEPLOY_DIR=".azure/deployments/$DEPLOYMENT_ID"
+[[ -f "$DEPLOY_DIR/state.json" ]] || { echo "state.json missing — deploy skill did not complete"; exit 1; }
+
+# Sanity-check the schema and the lifecycle owner
+jq '{schemaVersion, deploymentId, deployMethod, stackId, resourceGroups, managedResourceCount: (.managedResources | length)}' \
+   "$DEPLOY_DIR/state.json"
+```
+
+If `deployMethod == "stack"` and `stackId` is empty, the deploy fell back silently — re-run the skill with `--no-fallback` to surface why stacks were rejected.
+
+The destroy skill ([`azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md)) consumes this file as its sole source of truth.
+
+### 7. Report Deployment Results
 
 Provide a comprehensive summary:
 
@@ -270,7 +319,9 @@ Provide a comprehensive summary:
 To destroy this deployment and delete all its resources:
 > `@git-ape destroy deployment {deployment-id}`
 >
-> Or via GitHub: create a PR that sets `metadata.json` status to `destroy-requested`, then merge after approval
+> Locally this invokes the [`azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md) skill, which uses `az stack sub delete --action-on-unmanage deleteAll --bypass-stack-out-of-sync-error true` (single command, idempotent across resource groups and subscription scope) and purges any soft-deletable resources that are not purge-protected.
+>
+> Or via GitHub: create a PR that sets `metadata.json` status to `destroy-requested`, then merge after approval.
 
 **Deployment Logs:** {Link to deployment logs if available}
 ```
@@ -279,7 +330,17 @@ To destroy this deployment and delete all its resources:
 
 ### Deployment Failure
 
-If deployment fails, provide detailed diagnostics:
+If deployment fails, **always dump the underlying failed operations before presenting options to the user**. The stack/deployment top-level error is usually just a summary; the real root cause is in the per-resource operations list.
+
+```bash
+# Inline failure diagnostics — run BEFORE asking the user what to do
+echo "── Underlying failed operations ──"
+az deployment operation sub list --name "{deployment-id}" --output json 2>/dev/null \
+  | jq -r '.[] | select(.properties.provisioningState == "Failed") |
+      "──────────\nResource : \(.properties.targetResource.resourceName // "n/a") (\(.properties.targetResource.resourceType // "n/a"))\nStatus   : \(.properties.statusCode // "n/a")\nMessage  : \(.properties.statusMessage.error.message // .properties.statusMessage // "n/a")"'
+```
+
+Then surface the diagnostics in the user-facing message:
 
 ```markdown
 ❌ **Deployment Failed**
@@ -291,6 +352,9 @@ If deployment fails, provide detailed diagnostics:
 **Common Causes:**
 - {Likely cause 1 based on error}
 - {Likely cause 2}
+
+**Per-Resource Failures:**
+{Output of `az deployment operation sub list` filtered to Failed entries}
 
 **Diagnostic Details:**
 {Full error from Azure}
@@ -351,23 +415,25 @@ Type A, B, C, or D:
 # Option A: Full Rollback
 if [[ "$USER_CHOICE" == "A" ]]; then
   # Confirm first
-  echo "⚠️ This will DELETE all resources. Type 'confirm rollback' to proceed."
+  echo "⚠️ This will DELETE all managed resources. Type 'confirm rollback' to proceed."
   read CONFIRMATION
-  
+
   if [[ "$CONFIRMATION" == "confirm rollback" ]]; then
-    # Delete resources
-    az resource delete --ids {resource-id-1} {resource-id-2}
-    
-    # If RG was created new, delete it
-    if [[ "$RG_NEW" == "true" ]]; then
-      az group delete --name {rg-name} --yes --no-wait
-    fi
-    
+    # Single source of truth: the destroy skill handles stack delete,
+    # fallback RG delete, soft-delete purge sweep, and state.json updates.
+    .github/skills/azure-stack-destroy/scripts/destroy-stack.sh \
+      --deployment-id {deployment-id} \
+      --yes
+    # PowerShell equivalent:
+    # .github/skills/azure-stack-destroy/scripts/destroy-stack.ps1 -DeploymentId {deployment-id} -Yes
+
     # Log rollback
-    echo "Rollback completed" >> .azure/deployments/{deployment-id}/deployment.log
+    echo "Rollback completed via azure-stack-destroy skill" >> .azure/deployments/{deployment-id}/deployment.log
   fi
 fi
 ```
+
+> **Important:** Never mix individual `az resource delete` calls when a `stackId` is present in `state.json`. The stack path is canonical — always invoke the [`azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md) skill, which encapsulates the stack delete, fallback RG delete, and soft-delete purge sweep (Key Vault, Cognitive Services, etc.) for any resources that are not purge-protected.
 
 **Step 4: Update deployment state:**
 ```json
