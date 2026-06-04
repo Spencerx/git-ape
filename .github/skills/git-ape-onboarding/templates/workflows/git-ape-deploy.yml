@@ -1,8 +1,12 @@
 # Git-Ape Deploy Workflow
 # Triggers on:
-#   1. PR merge to main (when deployment files are included)
-#   2. `/deploy` comment on an approved PR (deploys from branch before merge)
+#   PR merge to main (when deployment files are included)
 # Runs the actual ARM deployment, captures outputs, and runs integration tests.
+#
+# NOTE: There is intentionally no `/deploy` comment trigger. A comment author's
+# authorization cannot be reliably verified from the workflow, so deployment is
+# gated solely on merge to main (which already requires PR review + approval via
+# branch protection).
 
 name: "Git-Ape: Deploy"
 
@@ -10,106 +14,28 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
-  # Trigger 1: PR merged to main with deployment artifacts
+  # PR merged to main with deployment artifacts
   push:
     branches: [main]
     paths:
       - ".azure/deployments/**/template.json"
       - ".azure/deployments/**/parameters.json"
 
-  # Trigger 2: `/deploy` comment on a PR
-  issue_comment:
-    types: [created]
-
 permissions:
   id-token: write         # OIDC token for Azure login
   contents: write          # Commit state files back to repo
   pull-requests: write     # Post deployment results as PR comment
-  issues: write            # Post on issue comments
+  issues: write            # Open a tracking issue if a merged-PR deploy fails
   security-events: write   # Upload SARIF results from template analyzer
   actions: read            # Required by codeql-action/upload-sarif to read workflow run context
 
 concurrency:
-  group: git-ape-deploy-${{ github.event_name == 'push' && github.sha || github.event.comment.id }}
+  group: git-ape-deploy-${{ github.sha }}
   cancel-in-progress: false   # Never cancel in-progress deployments
 
 jobs:
-  # Gate: Only run on `/deploy` comments on approved PRs
-  check-comment-trigger:
-    name: Check /deploy trigger
-    if: github.event_name == 'issue_comment'
-    runs-on: ubuntu-latest
-    outputs:
-      should_deploy: ${{ steps.check.outputs.should_deploy }}
-      pr_ref: ${{ steps.check.outputs.pr_ref }}
-    steps:
-      - name: Check comment and PR status
-        id: check
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const comment = context.payload.comment.body.trim();
-            if (!comment.startsWith('/deploy')) {
-              core.setOutput('should_deploy', 'false');
-              return;
-            }
-
-            // Must be on a PR (not a regular issue)
-            if (!context.payload.issue.pull_request) {
-              core.setOutput('should_deploy', 'false');
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: '❌ `/deploy` can only be used on pull requests.',
-              });
-              return;
-            }
-
-            // Get PR details
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-            });
-
-            // Check PR is approved
-            const { data: reviews } = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-            });
-            const approved = reviews.some(r => r.state === 'APPROVED');
-
-            if (!approved) {
-              core.setOutput('should_deploy', 'false');
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: '❌ PR must be **approved** before deploying. Get a review approval first.',
-              });
-              return;
-            }
-
-            core.setOutput('should_deploy', 'true');
-            core.setOutput('pr_ref', pr.head.ref);
-
-            // React to the comment
-            await github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: context.payload.comment.id,
-              content: 'rocket',
-            });
-
   detect-deployments:
     name: Detect deployments to execute
-    needs: [check-comment-trigger]
-    if: |
-      always() &&
-      (github.event_name == 'push' ||
-       (github.event_name == 'issue_comment' && needs.check-comment-trigger.outputs.should_deploy == 'true'))
     runs-on: ubuntu-latest
     outputs:
       deployment_ids: ${{ steps.find.outputs.deployment_ids }}
@@ -117,19 +43,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ needs.check-comment-trigger.outputs.pr_ref || github.ref }}
           fetch-depth: 0
 
       - name: Find deployment directories
         id: find
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            # On merge: find deployments changed in the merge commit
-            CHANGED_FILES=$(git diff --name-only HEAD~1...HEAD -- '.azure/deployments/*/template.json' 2>/dev/null || true)
-          else
-            # On /deploy comment: find all deployments with template.json on the branch
-            CHANGED_FILES=$(git diff --name-only origin/main...HEAD -- '.azure/deployments/*/template.json' 2>/dev/null || true)
-          fi
+          # On merge: find deployments changed in the merge commit
+          CHANGED_FILES=$(git diff --name-only HEAD~1...HEAD -- '.azure/deployments/*/template.json' 2>/dev/null || true)
 
           if [[ -z "$CHANGED_FILES" ]]; then
             echo "has_deployments=false" >> "$GITHUB_OUTPUT"
@@ -158,10 +78,8 @@ jobs:
 
   deploy:
     name: "Deploy: ${{ matrix.deployment_id }}"
-    needs: [detect-deployments, check-comment-trigger]
-    if: |
-      always() &&
-      needs.detect-deployments.outputs.has_deployments == 'true'
+    needs: [detect-deployments]
+    if: needs.detect-deployments.outputs.has_deployments == 'true'
     runs-on: ubuntu-latest
     environment: azure-deploy
     strategy:
@@ -178,8 +96,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.check-comment-trigger.outputs.pr_ref || github.ref }}
 
       - name: Read deployment parameters
         id: params
@@ -234,18 +150,11 @@ jobs:
             echo "[$(date -u +%H:%M:%S)] No prior stack — this is a NEW deployment."
           fi
 
-          # Also snapshot the previous template from git. The last-known-good
-          # baseline differs per trigger:
-          #   push          → HEAD~1 is the pre-merge state of main.
-          #   /deploy comment → we are on the PR head ref, so HEAD~1 is the PR
-          #                     commit's parent (NOT last-known-good); use origin/main.
+          # Also snapshot the previous template from git. On a push (merge to
+          # main), HEAD~1 is the pre-merge state of main — the last-known-good
+          # baseline to roll back to.
           DEPLOY_DIR="${{ steps.params.outputs.deploy_dir }}"
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            BASELINE_REF="HEAD~1"
-          else
-            git fetch origin main --depth=1 >/dev/null 2>&1 || true
-            BASELINE_REF="origin/main"
-          fi
+          BASELINE_REF="HEAD~1"
           mkdir -p /tmp/rollback
           if git show "$BASELINE_REF:$DEPLOY_DIR/template.json" > /tmp/rollback/template.json 2>/dev/null; then
             cp "$DEPLOY_DIR/parameters.json" /tmp/rollback/parameters.json 2>/dev/null || true
@@ -646,7 +555,7 @@ jobs:
 
           git add "$DEPLOY_DIR/state.json" "$DEPLOY_DIR/metadata.json"
           git diff --cached --quiet || git commit -m "git-ape: update state for $DEPLOYMENT_ID [$STATUS]"
-          git push || echo "::warning::Could not push state update to main"
+          git push || { echo "::error::Failed to push state update to main"; exit 1; }
 
       - name: Post deployment result
         if: always()
@@ -723,11 +632,9 @@ jobs:
             const marker = `<!-- git-ape-deploy:${deploymentId} -->`;
             body = marker + '\n' + body;
 
-            // Find the target PR. On issue_comment we have it; on push we find it from the SHA.
+            // Find the target PR from the merge commit SHA.
             let prNumber = null;
-            if (context.eventName === 'issue_comment') {
-              prNumber = context.issue.number;
-            } else if (context.eventName === 'push') {
+            {
               const sha = context.sha;
               const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
                 owner: context.repo.owner,
