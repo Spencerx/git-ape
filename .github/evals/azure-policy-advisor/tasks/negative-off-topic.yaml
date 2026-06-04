@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/microsoft/waza/main/schemas/task.schema.json
+
+id: negative-off-topic
+name: Negative — Off-topic Linux kernel question
+description: An OS-internals question about Linux cgroup v2 CPU bandwidth control is clearly outside the Azure governance domain and must not trigger azure-policy-advisor.
+# See positive-after-template-generation.yaml for `mutable-by-*` tag semantics.
+tags: [trigger, negative, mutable-by-skill]
+inputs:
+  prompt: |
+    Can you explain how Linux cgroup v2 CPU bandwidth control works —
+    specifically how the `cpu.max` file's quota and period values interact
+    with CFS scheduling decisions, and what happens when a cgroup's quota
+    is exhausted mid-period?
+graders:
+  - name: trigger_relevance_negative
+    type: trigger
+    config:
+      skill_path: .github/skills/azure-policy-advisor/SKILL.md
+      mode: negative
+      threshold: 0.5

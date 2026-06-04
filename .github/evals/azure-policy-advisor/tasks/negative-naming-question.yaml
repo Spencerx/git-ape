@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/microsoft/waza/main/schemas/task.schema.json
+
+id: negative-naming-question
+name: Negative — CAF naming lookup (azure-naming-research territory)
+description: A pure CAF abbreviation / naming-constraint question belongs to the azure-naming-research skill and must not trigger azure-policy-advisor.
+# See positive-after-template-generation.yaml for `mutable-by-*` tag semantics.
+tags: [trigger, negative, mutable-by-skill]
+inputs:
+  prompt: |
+    Quick naming-string question: what's the CAF abbreviation prefix for a
+    Key Vault, and what's the maximum length allowed for the name string?
+    Just the prefix and the length number — nothing else.
+graders:
+  - name: trigger_relevance_negative
+    type: trigger
+    config:
+      skill_path: .github/skills/azure-policy-advisor/SKILL.md
+      mode: negative
+      threshold: 0.5

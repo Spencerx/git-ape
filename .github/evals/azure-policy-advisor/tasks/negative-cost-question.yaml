@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/microsoft/waza/main/schemas/task.schema.json
+
+id: negative-cost-question
+name: Negative — Pricing / cost estimation (azure-cost-estimator territory)
+description: A pure pricing question belongs to the azure-cost-estimator skill and must not trigger azure-policy-advisor.
+# See positive-after-template-generation.yaml for `mutable-by-*` tag semantics.
+tags: [trigger, negative, mutable-by-skill]
+inputs:
+  prompt: |
+    Roughly how much will a Standard_LRS storage account plus a Y1
+    Consumption Function App cost per month in East US for moderate
+    workloads — say 500 GB of hot blob storage and 2 million function
+    executions per month at 200 ms average duration with 512 MB memory?
+
+    I am ONLY asking for an Azure retail price / cost estimate. Do not
+    assess policies, compliance, governance, or recommend any policy
+    assignments — just the cost breakdown.
+graders:
+  - name: trigger_relevance_negative
+    type: trigger
+    config:
+      skill_path: .github/skills/azure-policy-advisor/SKILL.md
+      mode: negative
+      threshold: 0.5
