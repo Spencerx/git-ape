@@ -463,7 +463,7 @@ This adds four workflows:
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `git-ape-plan.yml` | PR with template changes | Validate, what-if, cost estimate |
-| `git-ape-deploy.yml` | Merge to main or `/deploy` comment | ARM deployment |
+| `git-ape-deploy.yml` | Merge to main | ARM deployment |
 | `git-ape-destroy.yml` | PR merge with `destroy-requested` status | Delete resource group |
 | `git-ape-verify.yml` | Manual dispatch | Verify OIDC and RBAC health |
 

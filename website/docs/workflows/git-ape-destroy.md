@@ -123,6 +123,14 @@ jobs:
               echo "deployment_ids=[]" >> "$GITHUB_OUTPUT"
               exit 1
             fi
+            # Constrain the manually-supplied id to a safe charset before it
+            # becomes a matrix value (prevents script injection downstream).
+            if ! [[ "$INPUT_DEPLOYMENT_ID" =~ ^[A-Za-z0-9._-]+$ ]]; then
+              echo "::error::Invalid deployment_id '$INPUT_DEPLOYMENT_ID'. Allowed characters: A-Z a-z 0-9 . _ -"
+              echo "has_destroys=false" >> "$GITHUB_OUTPUT"
+              echo "deployment_ids=[]" >> "$GITHUB_OUTPUT"
+              exit 1
+            fi
             # Build the JSON array with jq so the input value is safely encoded.
             DEPLOYMENT_IDS=$(jq -n -c --arg id "$INPUT_DEPLOYMENT_ID" '[$id]')
             echo "has_destroys=true" >> "$GITHUB_OUTPUT"
@@ -165,6 +173,13 @@ jobs:
           fi
 
           DEPLOYMENT_IDS=$(echo "$DESTROY_IDS" | tr ' ' '\n' | grep -v '^$' | jq -R -s -c 'split("\n") | map(select(. != ""))')
+          # Reject any deployment directory name outside a safe charset before it
+          # becomes a matrix value (defense in depth on top of env-passing).
+          INVALID=$(echo "$DEPLOYMENT_IDS" | jq -r '.[] | select(test("^[A-Za-z0-9._-]+$") | not)')
+          if [[ -n "$INVALID" ]]; then
+            echo "::error::Invalid deployment directory name(s): $INVALID. Allowed characters: A-Z a-z 0-9 . _ -"
+            exit 1
+          fi
           echo "has_destroys=true" >> "$GITHUB_OUTPUT"
           echo "deployment_ids=$DEPLOYMENT_IDS" >> "$GITHUB_OUTPUT"
           echo "Deployments to destroy: $DEPLOYMENT_IDS"
@@ -180,13 +195,18 @@ jobs:
         deployment_id: ${{ fromJson(needs.detect-destroys.outputs.deployment_ids) }}
       max-parallel: 1
       fail-fast: false
+    # matrix.deployment_id is attacker-controllable (derived from PR directory
+    # names / workflow_dispatch input). Expose it as an environment variable so
+    # run blocks reference "$DEPLOYMENT_ID" instead of inlining ${{ ... }},
+    # preventing script injection.
+    env:
+      DEPLOYMENT_ID: ${{ matrix.deployment_id }}
     steps:
       - uses: actions/checkout@v6
 
       - name: Load deployment state
         id: state
         run: |
-          DEPLOYMENT_ID="${{ matrix.deployment_id }}"
           STATE_FILE=".azure/deployments/$DEPLOYMENT_ID/state.json"
 
           if [[ ! -f "$STATE_FILE" ]]; then
@@ -332,7 +352,6 @@ jobs:
       - name: Update deployment state
         if: always() && steps.state.outputs.found == 'true'
         run: |
-          DEPLOYMENT_ID="${{ matrix.deployment_id }}"
           DEPLOY_DIR=".azure/deployments/$DEPLOYMENT_ID"
           STATE_FILE="$DEPLOY_DIR/state.json"
           TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
@@ -374,13 +393,13 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$DEPLOY_DIR/state.json" "$DEPLOY_DIR/metadata.json"
-          git diff --cached --quiet || git commit -m "git-ape: mark ${{ matrix.deployment_id }} as $STATUS"
-          git push || echo "::warning::Could not push state update"
+          git diff --cached --quiet || git commit -m "git-ape: mark $DEPLOYMENT_ID as $STATUS"
+          git push || { echo "::error::Failed to push state update"; exit 1; }
 
       - name: Post summary
         if: always()
         run: |
-          DEPLOY_ID="${{ matrix.deployment_id }}"
+          DEPLOY_ID="$DEPLOYMENT_ID"
           STACK="${{ steps.state.outputs.stack_name }}"
           RG="${{ steps.state.outputs.resource_group }}"
           RESOURCE_COUNT="${{ steps.check.outputs.resource_count }}"
@@ -424,7 +443,7 @@ jobs:
         run: |
           if [[ -z "$SLACK_WEBHOOK_URL" ]]; then exit 0; fi
 
-          DEPLOY_ID="${{ matrix.deployment_id }}"
+          DEPLOY_ID="$DEPLOYMENT_ID"
           STACK="${{ steps.state.outputs.stack_name }}"
           if [[ "${{ steps.check.outputs.fallback_rg }}" == "true" ]]; then
             STATUS="${{ steps.destroy_rg.outputs.destroy_status }}"

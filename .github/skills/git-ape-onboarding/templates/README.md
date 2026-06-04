@@ -71,7 +71,7 @@ The skill scaffolds files **into the user's working copy only**:
 | Template | Destination in user repo | Purpose |
 |----------|--------------------------|---------|
 | `workflows/git-ape-plan.yml` | `.github/workflows/git-ape-plan.yml` | Validate template + what-if on PR |
-| `workflows/git-ape-deploy.yml` | `.github/workflows/git-ape-deploy.yml` | Execute deployment on merge or `/deploy` |
+| `workflows/git-ape-deploy.yml` | `.github/workflows/git-ape-deploy.yml` | Execute deployment on merge to main |
 | `workflows/git-ape-destroy.yml` | `.github/workflows/git-ape-destroy.yml` | Tear down stack on `destroy-requested` |
 | `workflows/git-ape-verify.yml` | `.github/workflows/git-ape-verify.yml` | Manual verify OIDC + RBAC + workflow presence |
 | `workflows/git-ape-drift.md` | `.github/workflows/git-ape-drift.md` | Agentic drift workflow source (gh-aw) |

@@ -296,7 +296,7 @@ graph LR
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | `git-ape-plan.yml` | PR with template changes | Validate, what-if, post plan as PR comment |
-| `git-ape-deploy.yml` | Merge to main or `/deploy` comment | Execute ARM deployment |
+| `git-ape-deploy.yml` | Merge to main | Execute ARM deployment |
 | `git-ape-destroy.yml` | Merge PR with `destroy-requested` | Delete resource group |
 | `git-ape-verify.yml` | Manual dispatch | Verify OIDC, RBAC, pipeline health |
 

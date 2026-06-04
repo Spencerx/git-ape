@@ -522,8 +522,6 @@ graph LR
     Merge --> Deploy["git-ape-deploy.yml<br/>ARM Deployment"]
     Deploy --> Test["Integration Tests"]
 
-    Comment["/deploy Comment"] --> Deploy
-
     Destroy["PR: status → destroy-requested"] --> DestroyMerge["Merge"]
     DestroyMerge --> DestroyWF["git-ape-destroy.yml<br/>Delete Resources"]
 
@@ -535,7 +533,7 @@ graph LR
     classDef destroy fill:#fecaca,stroke:#b91c1c,stroke-width:1px,color:#7f1d1d
     classDef verify fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#4c1d95
     class PR,Plan plan
-    class Review,Merge,Comment review
+    class Review,Merge review
     class Deploy,Test deploy
     class Destroy,DestroyMerge,DestroyWF destroy
     class Manual,Verify verify

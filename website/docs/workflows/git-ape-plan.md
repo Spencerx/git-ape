@@ -132,6 +132,18 @@ jobs:
           # Extract unique deployment IDs
           DEPLOYMENT_IDS=$(echo "$CHANGED_FILES" | sed 's|.azure/deployments/\([^/]*\)/.*|\1|' | sort -u | jq -R -s -c 'split("\n") | map(select(. != ""))')
 
+          # Reject any deployment directory name outside a safe charset before it
+          # becomes a matrix value. matrix.deployment_id is derived from
+          # attacker-controllable PR directory names; constraining it to
+          # [A-Za-z0-9._-] guarantees it can never carry shell or expression
+          # metacharacters into downstream jobs (defense in depth on top of the
+          # env-passing used in every run/script block).
+          INVALID=$(echo "$DEPLOYMENT_IDS" | jq -r '.[] | select(test("^[A-Za-z0-9._-]+$") | not)')
+          if [[ -n "$INVALID" ]]; then
+            echo "::error::Invalid deployment directory name(s): $INVALID. Allowed characters: A-Z a-z 0-9 . _ -"
+            exit 1
+          fi
+
           echo "has_deployments=true" >> "$GITHUB_OUTPUT"
           echo "deployment_ids=$DEPLOYMENT_IDS" >> "$GITHUB_OUTPUT"
           echo "Detected deployments: $DEPLOYMENT_IDS"
@@ -145,6 +157,11 @@ jobs:
       matrix:
         deployment_id: ${{ fromJson(needs.detect-deployments.outputs.deployment_ids) }}
       fail-fast: false
+    # matrix.deployment_id is attacker-controllable (derived from PR directory
+    # names). Expose it as an environment variable so run/script blocks reference
+    # "$DEPLOYMENT_ID" instead of inlining ${{ ... }}, preventing script injection.
+    env:
+      DEPLOYMENT_ID: ${{ matrix.deployment_id }}
 
     steps:
       - uses: actions/checkout@v6
@@ -152,7 +169,7 @@ jobs:
       - name: Read deployment parameters
         id: params
         run: |
-          DEPLOY_DIR=".azure/deployments/${{ matrix.deployment_id }}"
+          DEPLOY_DIR=".azure/deployments/$DEPLOYMENT_ID"
 
           if [[ ! -f "$DEPLOY_DIR/template.json" ]]; then
             echo "::error::Template not found: $DEPLOY_DIR/template.json"
@@ -291,7 +308,7 @@ jobs:
           #
           # Workaround: copy the template + parameters to a non-dotted directory at the
           # workspace root so the walker discovers them.
-          STAGE_DIR="templateanalyzer-scan/${{ matrix.deployment_id }}"
+          STAGE_DIR="templateanalyzer-scan/$DEPLOYMENT_ID"
           mkdir -p "$STAGE_DIR"
           cp "${{ steps.params.outputs.deploy_dir }}/template.json" "$STAGE_DIR/template.json"
           if [[ -f "${{ steps.params.outputs.deploy_dir }}/parameters.json" ]]; then
@@ -424,6 +441,9 @@ jobs:
       matrix:
         deployment_id: ${{ fromJson(needs.detect-deployments.outputs.deployment_ids) }}
       fail-fast: false
+    # See plan-local: route the attacker-controllable matrix value through env.
+    env:
+      DEPLOYMENT_ID: ${{ matrix.deployment_id }}
 
     steps:
       - uses: actions/checkout@v6
@@ -431,7 +451,7 @@ jobs:
       - name: Read deployment parameters
         id: params
         run: |
-          DEPLOY_DIR=".azure/deployments/${{ matrix.deployment_id }}"
+          DEPLOY_DIR=".azure/deployments/$DEPLOYMENT_ID"
 
           if [[ ! -f "$DEPLOY_DIR/template.json" ]]; then
             echo "::error::Template not found: $DEPLOY_DIR/template.json"
@@ -465,7 +485,7 @@ jobs:
           # az stack sub validate mirrors az deployment sub validate but also
           # verifies stack-specific settings (action-on-unmanage, deny settings).
           RESULT=$(az stack sub validate \
-            --name "${{ matrix.deployment_id }}" \
+            --name "$DEPLOYMENT_ID" \
             --location "${{ steps.params.outputs.location }}" \
             --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
             --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
@@ -597,6 +617,10 @@ jobs:
       matrix:
         deployment_id: ${{ fromJson(needs.detect-deployments.outputs.deployment_ids) }}
       fail-fast: false
+    # See plan-local: route the attacker-controllable matrix value through env so
+    # the github-script step reads process.env.DEPLOYMENT_ID, not an inlined ${{ }}.
+    env:
+      DEPLOYMENT_ID: ${{ matrix.deployment_id }}
 
     steps:
       - name: Download local summary artifact
@@ -618,7 +642,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const deploymentId = '${{ matrix.deployment_id }}';
+            const deploymentId = process.env.DEPLOYMENT_ID;
 
             function loadSummary(kind) {
               const path = `.git-ape-plan/${kind}/plan-${kind}-${deploymentId}.json`;

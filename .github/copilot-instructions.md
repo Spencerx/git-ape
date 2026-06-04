@@ -181,13 +181,12 @@ Git-Ape provides three GitHub Actions workflows under `.github/workflows/`:
 - Validation status (pass/fail with errors)
 - Architecture diagram (from `architecture.md`)
 - What-if analysis (resources to create/modify/delete)
-- Next steps (approve + merge to deploy, or `/deploy` to deploy early)
+- Next steps (approve + merge to deploy)
 
 #### `git-ape-deploy.yml` — Execute Deployment
 
 **Triggers:**
 - Push to `main` with deployment file changes (PR merge)
-- `/deploy` comment on an **approved** PR
 
 **What it does:**
 1. Detects deployment directories to execute
@@ -196,7 +195,7 @@ Git-Ape provides three GitHub Actions workflows under `.github/workflows/`:
 4. Deploys as an **Azure Deployment Stack** (`az stack sub create --action-on-unmanage deleteAll`)
 5. Runs integration tests (lists deployed resources, tests HTTP endpoints)
 6. Commits `state.json` (including `stackId` and `managedResources[]`) back to the repo
-7. Posts deployment result as a PR comment (on `/deploy` trigger)
+7. Posts deployment result as a PR comment
 
 **Why Deployment Stacks:**
 - The stack is the single unit of lifecycle — create, update, and destroy operate on it, not on the underlying RGs.
@@ -206,7 +205,7 @@ Git-Ape provides three GitHub Actions workflows under `.github/workflows/`:
 **Requires:** GitHub environment `azure-deploy` (for environment protection rules)
 
 **Safety:**
-- `/deploy` requires PR to be approved first
+- Deployment only runs after merge to `main`, which requires PR approval via branch protection
 - Deployments run sequentially (`max-parallel: 1`) to prevent conflicts
 - In-progress deployments are never cancelled (`cancel-in-progress: false`)
 
@@ -261,9 +260,8 @@ Issue: "Deploy a Container App in Southeast Asia, project myapp"
                     │ User reviews plan
                     ▼
     ┌───────────────────────────────┐
-    │  User approves PR             │
-    │  - Option A: Merge → deploy   │
-    │  - Option B: /deploy comment  │
+    │  User approves & merges PR    │
+    │  → deploy on merge to main    │
     └───────────────┬───────────────┘
                     │
                     ▼
@@ -447,5 +445,5 @@ When Git-Ape runs inside the Copilot Coding Agent:
 - The agent operates on a branch and creates a PR — it cannot interactively confirm with the user
 - Authentication must be pre-configured via OIDC in the Actions workflow
 - All deployment plans should be committed as files in the PR for review
-- Actual deployment should happen on merge (via a separate workflow) or via an explicit `/deploy` comment trigger
+- Actual deployment should happen on merge to `main` (via a separate workflow)
 - The agent should generate the template + what-if analysis but NOT execute deployment unless the workflow is explicitly configured to do so

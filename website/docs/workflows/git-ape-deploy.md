@@ -18,7 +18,6 @@ This workflow is **shipped as a template** under `.github/skills/git-ape-onboard
 ## Triggers
 
 - **`push`** — branches: `["main"]` — paths: `.azure/deployments/**/template.json, .azure/deployments/**/parameters.json`
-- **`issue_comment`** — types: `created`
 
 
 ## Permissions
@@ -32,21 +31,12 @@ This workflow is **shipped as a template** under `.github/skills/git-ape-onboard
 
 ## Jobs
 
-### `check-comment-trigger`
-
-| Property | Value |
-|----------|-------|
-| **Display Name** | Check /deploy trigger |
-| **Runs On** | `ubuntu-latest` |
-| **Steps** | 1 |
-
 ### `detect-deployments`
 
 | Property | Value |
 |----------|-------|
 | **Display Name** | Detect deployments to execute |
 | **Runs On** | `ubuntu-latest` |
-| **Depends On** | `check-comment-trigger` |
 | **Steps** | 2 |
 
 ### `deploy`
@@ -56,7 +46,7 @@ This workflow is **shipped as a template** under `.github/skills/git-ape-onboard
 | **Display Name** | Deploy: ${{ matrix.deployment_id }} |
 | **Runs On** | `ubuntu-latest` |
 | **Environment** | `azure-deploy` |
-| **Depends On** | `detect-deployments`, `check-comment-trigger` |
+| **Depends On** | `detect-deployments` |
 | **Steps** | 17 |
 
 
@@ -69,9 +59,13 @@ This workflow is **shipped as a template** under `.github/skills/git-ape-onboard
 ```yaml
 # Git-Ape Deploy Workflow
 # Triggers on:
-#   1. PR merge to main (when deployment files are included)
-#   2. `/deploy` comment on an approved PR (deploys from branch before merge)
+#   PR merge to main (when deployment files are included)
 # Runs the actual ARM deployment, captures outputs, and runs integration tests.
+#
+# NOTE: There is intentionally no `/deploy` comment trigger. A comment author's
+# authorization cannot be reliably verified from the workflow, so deployment is
+# gated solely on merge to main (which already requires PR review + approval via
+# branch protection).
 
 name: "Git-Ape: Deploy"
 
@@ -79,106 +73,28 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
-  # Trigger 1: PR merged to main with deployment artifacts
+  # PR merged to main with deployment artifacts
   push:
     branches: [main]
     paths:
       - ".azure/deployments/**/template.json"
       - ".azure/deployments/**/parameters.json"
 
-  # Trigger 2: `/deploy` comment on a PR
-  issue_comment:
-    types: [created]
-
 permissions:
   id-token: write         # OIDC token for Azure login
   contents: write          # Commit state files back to repo
   pull-requests: write     # Post deployment results as PR comment
-  issues: write            # Post on issue comments
+  issues: write            # Open a tracking issue if a merged-PR deploy fails
   security-events: write   # Upload SARIF results from template analyzer
   actions: read            # Required by codeql-action/upload-sarif to read workflow run context
 
 concurrency:
-  group: git-ape-deploy-${{ github.event_name == 'push' && github.sha || github.event.comment.id }}
+  group: git-ape-deploy-${{ github.sha }}
   cancel-in-progress: false   # Never cancel in-progress deployments
 
 jobs:
-  # Gate: Only run on `/deploy` comments on approved PRs
-  check-comment-trigger:
-    name: Check /deploy trigger
-    if: github.event_name == 'issue_comment'
-    runs-on: ubuntu-latest
-    outputs:
-      should_deploy: ${{ steps.check.outputs.should_deploy }}
-      pr_ref: ${{ steps.check.outputs.pr_ref }}
-    steps:
-      - name: Check comment and PR status
-        id: check
-        uses: actions/github-script@v9
-        with:
-          script: |
-            const comment = context.payload.comment.body.trim();
-            if (!comment.startsWith('/deploy')) {
-              core.setOutput('should_deploy', 'false');
-              return;
-            }
-
-            // Must be on a PR (not a regular issue)
-            if (!context.payload.issue.pull_request) {
-              core.setOutput('should_deploy', 'false');
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: '❌ `/deploy` can only be used on pull requests.',
-              });
-              return;
-            }
-
-            // Get PR details
-            const { data: pr } = await github.rest.pulls.get({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-            });
-
-            // Check PR is approved
-            const { data: reviews } = await github.rest.pulls.listReviews({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-            });
-            const approved = reviews.some(r => r.state === 'APPROVED');
-
-            if (!approved) {
-              core.setOutput('should_deploy', 'false');
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.issue.number,
-                body: '❌ PR must be **approved** before deploying. Get a review approval first.',
-              });
-              return;
-            }
-
-            core.setOutput('should_deploy', 'true');
-            core.setOutput('pr_ref', pr.head.ref);
-
-            // React to the comment
-            await github.rest.reactions.createForIssueComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              comment_id: context.payload.comment.id,
-              content: 'rocket',
-            });
-
   detect-deployments:
     name: Detect deployments to execute
-    needs: [check-comment-trigger]
-    if: |
-      always() &&
-      (github.event_name == 'push' ||
-       (github.event_name == 'issue_comment' && needs.check-comment-trigger.outputs.should_deploy == 'true'))
     runs-on: ubuntu-latest
     outputs:
       deployment_ids: ${{ steps.find.outputs.deployment_ids }}
@@ -186,19 +102,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ needs.check-comment-trigger.outputs.pr_ref || github.ref }}
           fetch-depth: 0
 
       - name: Find deployment directories
         id: find
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            # On merge: find deployments changed in the merge commit
-            CHANGED_FILES=$(git diff --name-only HEAD~1...HEAD -- '.azure/deployments/*/template.json' 2>/dev/null || true)
-          else
-            # On /deploy comment: find all deployments with template.json on the branch
-            CHANGED_FILES=$(git diff --name-only origin/main...HEAD -- '.azure/deployments/*/template.json' 2>/dev/null || true)
-          fi
+          # On merge: find deployments changed in the merge commit
+          CHANGED_FILES=$(git diff --name-only HEAD~1...HEAD -- '.azure/deployments/*/template.json' 2>/dev/null || true)
 
           if [[ -z "$CHANGED_FILES" ]]; then
             echo "has_deployments=false" >> "$GITHUB_OUTPUT"
@@ -209,16 +119,26 @@ jobs:
 
           DEPLOYMENT_IDS=$(echo "$CHANGED_FILES" | sed 's|.azure/deployments/\([^/]*\)/.*|\1|' | sort -u | jq -R -s -c 'split("\n") | map(select(. != ""))')
 
+          # Reject any deployment directory name outside a safe charset before it
+          # becomes a matrix value. matrix.deployment_id is derived from
+          # attacker-controllable PR directory names; constraining it to
+          # [A-Za-z0-9._-] guarantees it can never carry shell or expression
+          # metacharacters into downstream jobs (defense in depth on top of the
+          # env-passing used in every run/script block).
+          INVALID=$(echo "$DEPLOYMENT_IDS" | jq -r '.[] | select(test("^[A-Za-z0-9._-]+$") | not)')
+          if [[ -n "$INVALID" ]]; then
+            echo "::error::Invalid deployment directory name(s): $INVALID. Allowed characters: A-Z a-z 0-9 . _ -"
+            exit 1
+          fi
+
           echo "has_deployments=true" >> "$GITHUB_OUTPUT"
           echo "deployment_ids=$DEPLOYMENT_IDS" >> "$GITHUB_OUTPUT"
           echo "Deployments to execute: $DEPLOYMENT_IDS"
 
   deploy:
     name: "Deploy: ${{ matrix.deployment_id }}"
-    needs: [detect-deployments, check-comment-trigger]
-    if: |
-      always() &&
-      needs.detect-deployments.outputs.has_deployments == 'true'
+    needs: [detect-deployments]
+    if: needs.detect-deployments.outputs.has_deployments == 'true'
     runs-on: ubuntu-latest
     environment: azure-deploy
     strategy:
@@ -226,16 +146,20 @@ jobs:
         deployment_id: ${{ fromJson(needs.detect-deployments.outputs.deployment_ids) }}
       max-parallel: 1    # Deploy sequentially to avoid conflicts
       fail-fast: false
+    # matrix.deployment_id is attacker-controllable (derived from PR directory
+    # names). Expose it as an environment variable so run/script blocks reference
+    # "$DEPLOYMENT_ID" / process.env.DEPLOYMENT_ID instead of inlining ${{ ... }},
+    # preventing script injection.
+    env:
+      DEPLOYMENT_ID: ${{ matrix.deployment_id }}
 
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: ${{ needs.check-comment-trigger.outputs.pr_ref || github.ref }}
 
       - name: Read deployment parameters
         id: params
         run: |
-          DEPLOY_DIR=".azure/deployments/${{ matrix.deployment_id }}"
+          DEPLOY_DIR=".azure/deployments/$DEPLOYMENT_ID"
 
           if [[ ! -f "$DEPLOY_DIR/template.json" ]]; then
             echo "::error::Template not found: $DEPLOY_DIR/template.json"
@@ -267,7 +191,7 @@ jobs:
       - name: Capture pre-deploy state (for rollback)
         id: pre_state
         run: |
-          STACK_NAME="${{ matrix.deployment_id }}"
+          STACK_NAME="$DEPLOYMENT_ID"
           echo "::group::Pre-deploy state capture"
           echo "[$(date -u +%H:%M:%S)] Checking if stack '$STACK_NAME' already exists…"
 
@@ -285,18 +209,11 @@ jobs:
             echo "[$(date -u +%H:%M:%S)] No prior stack — this is a NEW deployment."
           fi
 
-          # Also snapshot the previous template from git. The last-known-good
-          # baseline differs per trigger:
-          #   push          → HEAD~1 is the pre-merge state of main.
-          #   /deploy comment → we are on the PR head ref, so HEAD~1 is the PR
-          #                     commit's parent (NOT last-known-good); use origin/main.
+          # Also snapshot the previous template from git. On a push (merge to
+          # main), HEAD~1 is the pre-merge state of main — the last-known-good
+          # baseline to roll back to.
           DEPLOY_DIR="${{ steps.params.outputs.deploy_dir }}"
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            BASELINE_REF="HEAD~1"
-          else
-            git fetch origin main --depth=1 >/dev/null 2>&1 || true
-            BASELINE_REF="origin/main"
-          fi
+          BASELINE_REF="HEAD~1"
           mkdir -p /tmp/rollback
           if git show "$BASELINE_REF:$DEPLOY_DIR/template.json" > /tmp/rollback/template.json 2>/dev/null; then
             cp "$DEPLOY_DIR/parameters.json" /tmp/rollback/parameters.json 2>/dev/null || true
@@ -314,9 +231,9 @@ jobs:
       - name: Validate before deploy (stack)
         run: |
           echo "::group::Template validation"
-          echo "[$(date -u +%H:%M:%S)] Validating stack '${{ matrix.deployment_id }}' in '${{ steps.params.outputs.location }}'"
+          echo "[$(date -u +%H:%M:%S)] Validating stack '$DEPLOYMENT_ID' in '${{ steps.params.outputs.location }}'"
           az stack sub validate \
-            --name "${{ matrix.deployment_id }}" \
+            --name "$DEPLOYMENT_ID" \
             --location "${{ steps.params.outputs.location }}" \
             --template-file "${{ steps.params.outputs.deploy_dir }}/template.json" \
             --parameters @"${{ steps.params.outputs.deploy_dir }}/parameters.json" \
@@ -332,7 +249,7 @@ jobs:
           # WORKAROUND: see git-ape-plan.yml for full explanation. Template Analyzer's
           # directory walker skips .azure/ on Linux (.NET treats dot-prefixed paths as
           # Hidden), so we stage the template into a non-dotted dir at the workspace root.
-          STAGE_DIR="templateanalyzer-scan/${{ matrix.deployment_id }}"
+          STAGE_DIR="templateanalyzer-scan/$DEPLOYMENT_ID"
           mkdir -p "$STAGE_DIR"
           cp "${{ steps.params.outputs.deploy_dir }}/template.json" "$STAGE_DIR/template.json"
           if [[ -f "${{ steps.params.outputs.deploy_dir }}/parameters.json" ]]; then
@@ -377,7 +294,7 @@ jobs:
       - name: Deploy to Azure (Deployment Stack)
         id: deploy
         run: |
-          STACK_NAME="${{ matrix.deployment_id }}"
+          STACK_NAME="$DEPLOYMENT_ID"
           echo "::group::Stack deployment"
           echo "[$(date -u +%H:%M:%S)] 🚀 Starting stack deployment: $STACK_NAME"
           echo "    location    : ${{ steps.params.outputs.location }}"
@@ -538,7 +455,7 @@ jobs:
         id: rollback
         if: failure() && steps.deploy.outcome == 'failure'
         run: |
-          STACK_NAME="${{ matrix.deployment_id }}"
+          STACK_NAME="$DEPLOYMENT_ID"
           STACK_EXISTED="${{ steps.pre_state.outputs.stack_existed }}"
           PRIOR_TEMPLATE_AVAILABLE="${{ steps.pre_state.outputs.prior_template_available }}"
 
@@ -632,7 +549,7 @@ jobs:
           # repo retains a human-readable manifest of what the stack owns.
           jq -n \
             --arg schemaVersion "1.0" \
-            --arg deploymentId "${{ matrix.deployment_id }}" \
+            --arg deploymentId "$DEPLOYMENT_ID" \
             --arg timestamp "$TIMESTAMP" \
             --arg status "$STATUS" \
             --arg duration "${{ steps.deploy.outputs.deploy_duration }}" \
@@ -696,8 +613,8 @@ jobs:
           cp /tmp/metadata.json "$DEPLOY_DIR/metadata.json" 2>/dev/null || true
 
           git add "$DEPLOY_DIR/state.json" "$DEPLOY_DIR/metadata.json"
-          git diff --cached --quiet || git commit -m "git-ape: update state for ${{ matrix.deployment_id }} [$STATUS]"
-          git push || echo "::warning::Could not push state update to main"
+          git diff --cached --quiet || git commit -m "git-ape: update state for $DEPLOYMENT_ID [$STATUS]"
+          git push || { echo "::error::Failed to push state update to main"; exit 1; }
 
       - name: Post deployment result
         if: always()
@@ -708,7 +625,7 @@ jobs:
           RESOURCES_JSON: ${{ steps.tests.outputs.resources }}
         with:
           script: |
-            const deploymentId = '${{ matrix.deployment_id }}';
+            const deploymentId = process.env.DEPLOYMENT_ID;
             const status = '${{ steps.deploy.outputs.deploy_status }}' || 'failed';
             const duration = '${{ steps.deploy.outputs.deploy_duration }}';
             const rollbackAction = '${{ steps.rollback.outputs.rollback_action }}' || 'none';
@@ -774,11 +691,9 @@ jobs:
             const marker = `<!-- git-ape-deploy:${deploymentId} -->`;
             body = marker + '\n' + body;
 
-            // Find the target PR. On issue_comment we have it; on push we find it from the SHA.
+            // Find the target PR from the merge commit SHA.
             let prNumber = null;
-            if (context.eventName === 'issue_comment') {
-              prNumber = context.issue.number;
-            } else if (context.eventName === 'push') {
+            {
               const sha = context.sha;
               const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
                 owner: context.repo.owner,
@@ -851,7 +766,7 @@ jobs:
           if [[ -z "$SLACK_WEBHOOK_URL" ]]; then exit 0; fi
 
           STATUS="${{ steps.deploy.outputs.deploy_status }}"
-          DEPLOY_ID="${{ matrix.deployment_id }}"
+          DEPLOY_ID="$DEPLOYMENT_ID"
           DURATION="${{ steps.deploy.outputs.deploy_duration }}"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 

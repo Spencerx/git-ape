@@ -62,7 +62,7 @@ graph TD
 
 ### `git-ape-deploy.yml` — Execute Deployment
 
-**Triggers:** Push to `main` (PR merge) or `/deploy` comment on approved PR
+**Triggers:** Push to `main` (PR merge)
 
 | Step | Action |
 |------|--------|
