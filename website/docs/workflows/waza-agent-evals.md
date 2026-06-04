@@ -566,7 +566,7 @@ jobs:
           # instead of polluting the score table.
           #
           # --judge-model is decoupled from the executor model so quality
-          # scores are always judged by claude-sonnet-4.6 even if we ever
+          # scores are always judged by claude-opus-4.7 even if we ever
           # add per-agent model overrides.
           max_attempts=3
           attempt=0
@@ -577,7 +577,7 @@ jobs:
             rc=0
             waza run "${spec}" \
               --model "claude-sonnet-4.6" \
-              --judge-model "claude-sonnet-4.6" \
+              --judge-model "claude-opus-4.7" \
               --suggest \
               --recommend \
               --format "github-comment" \

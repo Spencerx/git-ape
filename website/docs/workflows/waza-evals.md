@@ -560,7 +560,7 @@ jobs:
           # --model overrides the spec's config.model so we can fan out the
           # same eval suite across multiple models.
           # --judge-model decouples the LLM-as-judge from the executor model
-          # so quality scores are always judged by claude-sonnet-4.6.
+          # so quality scores are always judged by claude-opus-4.7.
           # --suggest --recommend appends outcome-tied recommendations.
           max_attempts=3
           attempt=0
@@ -572,7 +572,7 @@ jobs:
             # shellcheck disable=SC2086
             waza run "${spec}" \
               --model "${{ matrix.model }}" \
-              --judge-model "claude-sonnet-4.6" \
+              --judge-model "claude-opus-4.7" \
               --suggest \
               --recommend \
               ${extra_flags} \

@@ -493,9 +493,9 @@ jobs:
           #      roster (this workflow currently fixes the runner to
           #      sonnet-4.6, but the rule holds: judge is always outside
           #      whatever set of models we ever fan runners across).
-          #   2. Judge capability ≥ runner — opus-4.7 dominates sonnet-4.6
-          #      on reasoning benchmarks, so quality scores have headroom
-          #      and aren't capped by a same-tier judge.
+          #   2. Judge capability ≥ runner — opus-4.7 is chosen as a
+          #      higher-capability judge than sonnet-4.6 so quality scores
+          #      have headroom and aren't capped by a same-tier judge.
           # If we ever add per-agent model overrides AND opus-4.7 lands in
           # a runner roster, re-pin the judge to a model still outside it.
           max_attempts=3

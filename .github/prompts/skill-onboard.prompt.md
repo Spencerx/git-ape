@@ -365,6 +365,9 @@ waza run ".github/evals/${skill}/eval.yaml" \
 same reason as `/skill-promote`: judge sits outside every runner
 roster, so smoke verdicts cannot leak self-grading bias even if the
 operator changes `smokeModel`. `smokeModel` only swaps the runner.
+The one exception: if the operator sets `smokeModel` to
+`claude-opus-4.7` (the same value as `--judge-model`), the smoke run
+becomes self-graded — avoid that pairing.
 
 Parse the result JSON and report:
 

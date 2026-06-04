@@ -119,10 +119,10 @@ is NOT in any runner roster (pilot or expanded). Two reasons:
    judge, that leg's prompt-grader verdicts conflate model capability
    with judge agreement. Pinning the judge outside the roster gives
    every leg an independent grader.
-2. **Judge capability ≥ every runner.** `claude-opus-4.7` strictly
-   dominates the current pilot/expanded runner mix (sonnet-4.6,
-   gpt-5.4, gpt-5.3-codex, opus-4.6) on reasoning benchmarks, so it
-   can score the strongest runner outputs without ceiling effects.
+2. **Judge capability ≥ every runner.** `claude-opus-4.7` is chosen as
+   a higher-capability judge than the current pilot/expanded runner mix
+   (sonnet-4.6, gpt-5.4, gpt-5-codex, opus-4.6) to reduce ceiling
+   effects when scoring the strongest runner outputs.
 
 Run sequentially — quota consumption stays predictable.
 
