@@ -152,13 +152,15 @@ Always include these tags on all resources:
 
 ## Deployment Workflow
 
-### Interactive Mode (VS Code)
+### Interactive Mode (VS Code / local CLI)
 
 1. **Requirements Gathering:** Collect all necessary parameters before generating templates
 2. **Template Validation:** Always validate ARM templates before deployment
 3. **User Confirmation:** Echo deployment intent and wait for explicit approval
-4. **Deployment Execution:** Monitor progress and capture deployment logs
-5. **Integration Testing:** Run health checks on deployed resources
+4. **Deployment Execution:** Invoke the **[`azure-stack-deploy`](.github/skills/azure-stack-deploy/SKILL.md) skill**, which deploys as a subscription-scoped Azure Deployment Stack (`az stack sub create --action-on-unmanage deleteAll`). This is the same primitive used by the CI workflows so local and pipeline deployments produce identical state. The skill captures the stack ID, managed resources, soft-deletable resources, and resource groups into `state.json` (schemaVersion 1.0). It falls back to `az deployment sub create` only if Deployment Stacks are unavailable in the target subscription/region. Both bash (`scripts/deploy-stack.sh`) and PowerShell (`scripts/deploy-stack.ps1`) implementations are provided.
+5. **State Persistence:** The deploy skill writes `state.json` and updates `metadata.json` with `deployMethod` (`stack` or `subscription`) and `resourceGroups[]`. Schema reference: [website/docs/deployment/state.md](website/docs/deployment/state.md).
+6. **Integration Testing:** Run health checks on deployed resources
+7. **Destroy:** Invoke the **[`azure-stack-destroy`](.github/skills/azure-stack-destroy/SKILL.md) skill** (or `@git-ape destroy deployment {deployment-id}`). The skill mirrors the CI workflow exactly: `az stack sub delete --action-on-unmanage deleteAll --bypass-stack-out-of-sync-error true` (single command, idempotent across resource groups and subscription scope), purges any soft-deletable resources that are not purge-protected (Key Vault, Cognitive Services, etc.), then cleans the subscription deployment history entry to stay under the 800/scope limit. Both bash (`scripts/destroy-stack.sh`) and PowerShell (`scripts/destroy-stack.ps1`) implementations are provided.
 
 ### Pipeline Mode (GitHub Actions)
 
@@ -192,10 +194,11 @@ Git-Ape provides three GitHub Actions workflows under `.github/workflows/`:
 1. Detects deployment directories to execute
 2. Logs into Azure via OIDC
 3. Validates the template one more time (`az stack sub validate`)
-4. Deploys as an **Azure Deployment Stack** (`az stack sub create --action-on-unmanage deleteAll`)
-5. Runs integration tests (lists deployed resources, tests HTTP endpoints)
-6. Commits `state.json` (including `stackId` and `managedResources[]`) back to the repo
-7. Posts deployment result as a PR comment
+4. Deploys as an **Azure Deployment Stack** (`az stack sub create --action-on-unmanage deleteAll`; falls back to `az deployment sub create` if stacks are unavailable)
+5. Captures the **stack ID**, managed resources, soft-deletable resources, and resource groups into `state.json`
+6. Runs integration tests (lists deployed resources, tests HTTP endpoints)
+7. Commits `state.json` (extended schema, including `stackId` and `managedResources[]`) and `metadata.json` (`deployMethod`, `resourceGroups[]`) back to the repo
+8. Posts deployment result as a PR comment
 
 **Why Deployment Stacks:**
 - The stack is the single unit of lifecycle — create, update, and destroy operate on it, not on the underlying RGs.
@@ -429,7 +432,10 @@ jobs:
             --parameters @.azure/deployments/${{ env.DEPLOYMENT_ID }}/parameters.json \
             --action-on-unmanage deleteAll \
             --deny-settings-mode none \
-            --yes
+            --description "Git-Ape deployment ${{ env.DEPLOYMENT_ID }}" \
+            --tags "managedBy=git-ape" "deploymentId=${{ env.DEPLOYMENT_ID }}" \
+            --yes \
+            --verbose
 ```
 
 **Transitioning from Service Principal secrets to OIDC:**
