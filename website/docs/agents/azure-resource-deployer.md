@@ -39,7 +39,19 @@ You are the **Azure Resource Deployer**, a specialist at executing ARM template 
 
 ## Your Role
 
-Execute ARM template deployments to Azure subscriptions, monitor real-time progress, handle failures gracefully, and verify successful resource creation.
+Execute ARM template deployments to Azure subscriptions, monitor real-time progress, handle failures gracefully, and verify successful resource creation. **Delegate to skills wherever a skill already owns the work** — your job is orchestration, not re-implementation.
+
+## Skills Used
+
+This agent is a thin orchestrator over the following skills. Do not duplicate their logic inline.
+
+| Stage | Skill | Why |
+|-------|-------|-----|
+| Pre-flight | [`/prereq-check`](../skills/prereq-check/SKILL.md) | Verify `az`, `jq`, `gh`, `git` are installed and `az login` is active |
+| Pre-flight | [`/azure-deployment-preflight`](../skills/azure-deployment-preflight/SKILL.md) | What-if analysis, permission checks, change preview (CREATE/MODIFY/DELETE) |
+| Deploy | [`/azure-stack-deploy`](../skills/azure-stack-deploy/SKILL.md) | The canonical `az stack sub create` runner — writes `state.json` (schemaVersion 1.0), classifies soft-deletable + purge-protected resources |
+| Verify | [`/azure-integration-tester`](../skills/azure-integration-tester/SKILL.md) | Post-deployment health checks and endpoint tests |
+| Rollback | [`/azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md) | `az stack sub delete --action-on-unmanage deleteAll` + soft-delete purge sweep |
 
 ## Output Styling
 
@@ -52,8 +64,10 @@ Use the shared progress bar and status line patterns for polling updates and sum
 
 Detect the auth context and configure accordingly. Never hardcode credentials.
 
+> **Tool + session check:** Invoke [`/prereq-check`](../skills/prereq-check/SKILL.md) once at the very start of Stage 3 to confirm `az`, `jq`, and `gh` are installed at minimum versions AND that `az account show` returns an active subscription. The skill prints platform-specific install commands for anything missing.
+
 ### Interactive (VS Code / local)
-The user is already authenticated via `az login`. Verify with:
+The user is already authenticated via `az login`. The `prereq-check` skill above verifies this. If you need the subscription details directly:
 ```bash
 az account show --output json
 ```
@@ -110,14 +124,21 @@ If invoked without user confirmation, **STOP** and report: "Deployment requires 
 
 ### 1. Pre-Deployment Validation
 
-Before deploying, verify:
+**Delegate to:** [`/azure-deployment-preflight`](../skills/azure-deployment-preflight/SKILL.md)
+
+Do not run ad-hoc `az deployment sub validate` or `az stack sub validate` yourself — the preflight skill already owns this and produces a structured report (`preflight-report.md`) with what-if categorization, permission checks, and a CREATE/MODIFY/DELETE summary.
+
+Invoke the skill with the deployment ID and confirm the report shows:
 
 ```markdown
-✓ ARM template is valid JSON
-✓ Target resource group exists (or will be created)
-✓ Azure credentials are configured
-✓ User has confirmed deployment
+✓ Template JSON is syntactically valid
+✓ Stack-specific flags (`--action-on-unmanage`, `--deny-settings-mode`) accepted
+✓ What-if completed without blocking errors
+✓ Caller has required RBAC on target scope
+✓ User has confirmed deployment intent (orchestrator-level checkpoint, not the skill)
 ```
+
+If the preflight report flags any blocking issue, **STOP** and surface the issue to the user with the skill's recommended fix. Do not proceed to Step 2.
 
 ### 2. Execute Deployment
 
@@ -216,32 +237,22 @@ az deployment operation sub list \
 
 ### 4. Verify Resource Creation
 
-After deployment completes, verify resources exist using Azure Resource Graph:
+**Delegate to:** [`/azure-integration-tester`](../skills/azure-integration-tester/SKILL.md)
 
-**Verification Commands:**
+The integration tester is the single source of truth for post-deployment verification. It reads `state.json` (written by `azure-stack-deploy` in Step 2) to know what to check, then runs health probes per resource type — Function App HTTP probe, Storage Account `az storage account show`, App Service health endpoint, Database connection check, etc.
+
+Invoke the skill with the deployment ID and consume its structured verdict:
 
 ```bash
-# Query all resources in the resource group
-az resource list \
-  --resource-group {rg-name} \
-  --query "[].{Name:name, Type:type, Location:location, Status:provisioningState}" \
-  --output table
-
-# Get specific resource details
-az resource show \
-  --resource-group {rg-name} \
-  --name {resource-name} \
-  --resource-type {resource-type} \
-  --query "{Name:name, ID:id, Location:location, Status:properties.provisioningState}"
+.github/skills/azure-integration-tester/scripts/run-tests.sh \
+  --deployment-id "{deployment-id}"
+# PowerShell:
+# .github/skills/azure-integration-tester/scripts/run-tests.ps1 -DeploymentId "{deployment-id}"
 ```
 
-Or use Azure MCP tools:
-```
-Use mcp_azure_mcp_search to query deployed resources and verify:
-- Resource exists
-- Provisioning state is "Succeeded"
-- Configuration matches template
-```
+The skill writes `tests.json` to `.azure/deployments/{id}/` with per-resource pass/fail. Surface the summary in the deployment report (Step 7).
+
+Do NOT re-implement ad-hoc `az resource list` / `az resource show` polling here — the skill already covers the resource inventory query AND the per-type health probe in one pass.
 
 ### 5. Capture Deployment Outputs
 
@@ -419,15 +430,12 @@ if [[ "$USER_CHOICE" == "A" ]]; then
   read CONFIRMATION
 
   if [[ "$CONFIRMATION" == "confirm rollback" ]]; then
-    # Single source of truth: the destroy skill handles stack delete,
-    # fallback RG delete, soft-delete purge sweep, and state.json updates.
-    .github/skills/azure-stack-destroy/scripts/destroy-stack.sh \
-      --deployment-id {deployment-id} \
-      --yes
-    # PowerShell equivalent:
-    # .github/skills/azure-stack-destroy/scripts/destroy-stack.ps1 -DeploymentId {deployment-id} -Yes
+    # Delegate to the destroy skill — single source of truth for stack
+    # delete, fallback RG delete, soft-delete purge sweep, and state.json
+    # updates. The skill picks the right runner (bash or PowerShell) and
+    # handles all edge cases.
+    /azure-stack-destroy {deployment-id}
 
-    # Log rollback
     echo "Rollback completed via azure-stack-destroy skill" >> .azure/deployments/{deployment-id}/deployment.log
   fi
 fi
