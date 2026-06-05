@@ -57,17 +57,20 @@ jobs:
           fi
           echo "Resolved version: $VERSION (tag: v$VERSION)"
 
-      - name: Validate tagged commit is on main history
-        if: github.event_name == 'push'
+      - name: Validate release commit is on main history
         run: |
           set -euo pipefail
+          # Runs for both push (tag already exists) and workflow_dispatch (tag
+          # created later in this job). Guarding here — before any tag is
+          # created or pushed — ensures a manual release cannot publish from a
+          # commit that is not reachable from main.
           git fetch origin main
           if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
-            echo "❌ Tagged commit $GITHUB_SHA is not reachable from origin/main."
-            echo "Create release tags from commits already merged to main."
+            echo "❌ Release commit $GITHUB_SHA is not reachable from origin/main."
+            echo "Create releases from commits already merged to main."
             exit 1
           fi
-          echo "✅ Tagged commit is reachable from origin/main."
+          echo "✅ Release commit is reachable from origin/main."
 
       - name: Validate release version invariant
         env:
