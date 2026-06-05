@@ -352,18 +352,18 @@ az role assignment create \
 
 ### Step 4: Configure GitHub repository
 
-#### Set secrets
+#### Set secrets and variables
 
-These are identifiers, not actual credentials — OIDC means no secrets are stored.
+These are identifiers, not actual credentials — OIDC means no secrets are stored. `AZURE_CLIENT_ID` and `AZURE_TENANT_ID` are stored as **secrets**; `AZURE_SUBSCRIPTION_ID` is a **variable** (the workflows read it via `vars.AZURE_SUBSCRIPTION_ID`).
 
 <details>
 <summary><strong>Single environment</strong></summary>
 
 ```bash
 REPO="your-org/your-repo"
-echo "$CLIENT_ID"       | gh secret set AZURE_CLIENT_ID -R "$REPO"
-echo "$TENANT_ID"       | gh secret set AZURE_TENANT_ID -R "$REPO"
-echo "$SUBSCRIPTION_ID" | gh secret set AZURE_SUBSCRIPTION_ID -R "$REPO"
+echo "$CLIENT_ID" | gh secret set AZURE_CLIENT_ID -R "$REPO"
+echo "$TENANT_ID" | gh secret set AZURE_TENANT_ID -R "$REPO"
+gh variable set AZURE_SUBSCRIPTION_ID -R "$REPO" --body "$SUBSCRIPTION_ID"
 ```
 
 </details>
@@ -380,15 +380,15 @@ echo "$TENANT_ID" | gh secret set AZURE_TENANT_ID -R "$REPO"
 
 for ENV in dev staging prod; do
   # Use the right subscription variable for each stage
-  gh secret set AZURE_CLIENT_ID       --repo "$REPO" --env "azure-deploy-$ENV" --body "$CLIENT_ID"
-  gh secret set AZURE_TENANT_ID       --repo "$REPO" --env "azure-deploy-$ENV" --body "$TENANT_ID"
-  gh secret set AZURE_SUBSCRIPTION_ID --repo "$REPO" --env "azure-deploy-$ENV" --body "${ENV}_SUBSCRIPTION_ID_VALUE"
+  gh secret set   AZURE_CLIENT_ID       --repo "$REPO" --env "azure-deploy-$ENV" --body "$CLIENT_ID"
+  gh secret set   AZURE_TENANT_ID       --repo "$REPO" --env "azure-deploy-$ENV" --body "$TENANT_ID"
+  gh variable set AZURE_SUBSCRIPTION_ID --repo "$REPO" --env "azure-deploy-$ENV" --body "${ENV}_SUBSCRIPTION_ID_VALUE"
 done
 
 # Destroy environment
-gh secret set AZURE_CLIENT_ID       --repo "$REPO" --env "azure-destroy" --body "$CLIENT_ID"
-gh secret set AZURE_TENANT_ID       --repo "$REPO" --env "azure-destroy" --body "$TENANT_ID"
-gh secret set AZURE_SUBSCRIPTION_ID --repo "$REPO" --env "azure-destroy" --body "$DEV_SUBSCRIPTION_ID"
+gh secret set   AZURE_CLIENT_ID       --repo "$REPO" --env "azure-destroy" --body "$CLIENT_ID"
+gh secret set   AZURE_TENANT_ID       --repo "$REPO" --env "azure-destroy" --body "$TENANT_ID"
+gh variable set AZURE_SUBSCRIPTION_ID --repo "$REPO" --env "azure-destroy" --body "$DEV_SUBSCRIPTION_ID"
 ```
 
 </details>

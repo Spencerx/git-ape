@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - name: Check required secrets
+      - name: Check required secrets and variables
         id: secrets
         env:
           # Route secret/variable presence through env booleans rather than inlining
@@ -147,7 +147,7 @@ jobs:
           echo ""
 
           if [[ "${{ steps.secrets.outputs.missing }}" != "0" ]]; then
-            echo "❌ Setup incomplete — ${{ steps.secrets.outputs.missing }} secret(s) missing"
+            echo "❌ Setup incomplete — ${{ steps.secrets.outputs.missing }} required value(s) missing"
             echo "   Run: @Git-Ape Onboarding or /git-ape-onboarding"
           else
             echo "✅ Git-Ape setup verified successfully!"
@@ -155,5 +155,5 @@ jobs:
             echo "Next steps:"
             echo "  1. Add a deployment under .azure/deployments/"
             echo "  2. Open a PR to trigger the plan workflow"
-            echo "  3. Merge or comment /deploy to deploy"
+            echo "  3. Merge to main to deploy"
           fi
