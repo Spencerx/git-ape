@@ -27,6 +27,13 @@ config:
   # Stays below the budget grader's 300000ms cap so graders have headroom.
   timeout_seconds: 240
   parallel: false
+  # `copilot-sdk` runs against a real Copilot SDK and incurs premium-request
+  # spend. For cheap CI gating that only validates trigger / budget / lint
+  # scores without model behaviour, swap to `executor: mock` — waza ships a
+  # built-in mock executor that returns deterministic empty responses in 0ms
+  # with 0 premium requests, preserving the heuristic-only grader scores
+  # (trigger, budget, lint). The prompt graders below require a real model
+  # and are skipped under mock.
   executor: copilot-sdk
   model: claude-sonnet-4.6
 

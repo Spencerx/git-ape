@@ -1,6 +1,6 @@
 ---
 name: azure-policy-advisor
-description: "Map ARM templates to Azure Policy definitions and initiatives. Queries subscription assignments via `az policy assignment list`, identifies unassigned built-in and custom policies (CIS, NIST, FedRAMP), and emits a two-part report: template-fixable gaps (Part 1) and subscription-level policy assignments (Part 2). INVOKES: az policy assignment list, az policy set-definition list, microsoft_docs_search, microsoft_docs_fetch."
+description: "Assess ARM template resources for Azure Policy compliance. Analyse the template, query existing subscription assignments via `az policy assignment list`, identify unassigned built-in and custom policies (CIS, NIST, FedRAMP), and emit a two-part report: template-fixable gaps (Part 1) and subscription-level policy assignments (Part 2). USE FOR: recommending Azure Policy assignments for an ARM template, auditing a subscription against CIS/NIST/general best practices, deciding which initiatives to assign at sub or management-group scope, distinguishing template-fixable vs platform-level governance gaps. DO NOT USE FOR: per-resource security configuration assessment (use azure-security-analyzer), RBAC role recommendations (use azure-role-selector), CAF naming abbreviations (use azure-naming-research), or pricing estimates (use azure-cost-estimator). INVOKES: az policy assignment list, az policy set-definition list, microsoft_docs_search, microsoft_docs_fetch."
 metadata:
   argument-hint: "ARM template JSON or resource types to assess, and optionally a compliance framework (CIS, NIST, general)"
   user-invocable: true
@@ -8,18 +8,17 @@ metadata:
 
 # Azure Policy Advisor
 
-Recommend Azure Policy assignments for ARM template resources by combining three sources of truth: existing Azure subscription policy state (assignments + definitions), Microsoft Learn built-in recommendations, and ARM template configuration analysis. Produces per-resource policy recommendations with severity ratings, built-in/custom definition IDs, and ready-to-use implementation options.
+**Recommend** Azure Policy assignments for ARM template resources by combining three sources of truth: existing Azure subscription policy state (assignments + definitions), Microsoft Learn built-in recommendations, and ARM template configuration analysis. The skill **analyses** each resource, **queries** the live subscription, **classifies** gaps, and **produces** per-resource recommendations with severity ratings, built-in/custom definition IDs, and ready-to-use implementation options.
 
-## When to Use
+## USE FOR
 
-- After template generation — recommend policies that complement deployed resources
-- Compliance audit — assess resources against CIS, NIST, or general best practices
-- During onboarding — recommend baseline policies for a new subscription
-- When user asks "what policies should we enforce?" or "are we compliant with X?"
+- "What Azure Policies should we enforce on this template?"
+- "Audit our subscription against CIS Azure Foundations / NIST SP 800-53"
+- "Which built-in initiative covers governance for this deployment?"
+- "Split policy work between template fixes vs subscription-level assignments"
+- "Recommend baseline policy assignments for a new subscription"
 
-**Scope:** This skill assesses (a) ARM template resources you supply and (b) the existing policy state in the target Azure subscription (active assignments + unassigned custom definitions). It does **not** enumerate the live configuration of deployed resources — for that, use `azure-drift-detector`.
-
-## When NOT to Use
+## DO NOT USE FOR
 
 - **Per-resource security configuration assessment** (HTTPS-only, public access, shared-key access, TLS version, etc.) → use `azure-security-analyzer`
 - **RBAC role recommendations / least-privilege role selection** → use `azure-role-selector`
@@ -28,6 +27,23 @@ Recommend Azure Policy assignments for ARM template resources by combining three
 - **VM SKU / API version / quota availability checks** → use `azure-resource-availability`
 - **Comparing deployed state vs stored template state** (configuration drift) → use `azure-drift-detector`
 - **Generating a new ARM template from requirements** → invoke the `Azure Template Generator` agent
+
+**Scope:** This skill assesses (a) ARM template resources you supply and (b) the existing policy state in the target Azure subscription (active assignments + unassigned custom definitions). It does **not** enumerate the live configuration of deployed resources — for that, use `azure-drift-detector`.
+
+## MCP Tools
+
+| Tool | Purpose |
+|---|---|
+| `microsoft_docs_search` | Search Microsoft Learn for built-in policy definitions per resource type |
+| `microsoft_docs_fetch` | Retrieve full Microsoft Learn pages (built-in policies index, framework initiatives) |
+
+## Prerequisites
+
+| Requirement | How |
+|---|---|
+| Azure CLI logged in | `az login` (skill degrades gracefully — see Troubleshooting if `az` is unavailable) |
+| MCP server `microsoft.docs.mcp` available | Configure in your MCP client; used by Step 4 to look up built-in policy IDs |
+| ARM template OR resource type list | Provided by the user or generated by `Azure Template Generator` |
 
 ## Procedure
 
@@ -327,3 +343,26 @@ When invoked during a deployment workflow, save results to the deployment direct
 - **Template Generator:** After `/azure-security-analyzer`, optionally invoke `/azure-policy-advisor` to recommend subscription-level policies that complement the template
 - **Onboarding:** After RBAC setup, the onboarding flow captures compliance preferences and adds them to `copilot-instructions.md` — this skill reads them automatically
 - **Drift Detector:** Cross-reference drift findings with policy recommendations — drift items covered by assigned policies will auto-remediate
+
+## Examples
+
+**Example 1 — Post-template recommendation (general best practices)**
+
+> "I just generated an ARM template with a Storage Account, Function App, and Key Vault for production. What Azure Policies should we enforce? Separate template fixes from subscription-level assignments."
+
+Skill activates → Step 1 reads "General best practices" + Audit from copilot-instructions → Step 2 runs `discover_policy_state.sh` → finds `SecurityCenterBuiltIn` (MCSB) initiative covers 13 of 17 recommendations → Step 6 emits Part 1 (4 template fixes: blob soft delete + 3 diagnostic settings) and Part 2 (3 monitoring built-ins to assign).
+
+**Example 2 — Compliance framework audit**
+
+> "Audit our subscription resources against CIS Azure Foundations v3.0 — what's covered and what's missing?"
+
+Skill activates → Step 1 captures `framework: CIS Azure Foundations v3.0` → Step 2 discovers existing assignments → Step 4 fetches the `CIS Azure Foundations Benchmark v3.0.0` built-in initiative ID from Microsoft Learn → Step 3 verifies the ID via `az policy set-definition list --query "[?contains(displayName, 'CIS')]"` → Step 6 emits per-control coverage + recommended initiative assignment.
+
+## Troubleshooting
+
+| Symptom | Cause | Resolution |
+|---|---|---|
+| `discover_policy_state.sh` exits non-zero, errors about `az login` | Azure CLI not authenticated | Run `az login` and retry. If unauthenticated by design (e.g., template-only review), the skill still produces Part 1 + recommended built-ins from Microsoft Learn, with `subscriptionState: "unavailable"` in the JSON sidecar |
+| Recommended definition ID returns "not found" from `az policy definition show` | Display-name drift or wrong cloud (Public vs Government vs China) | Re-verify via Step 3: `az policy set-definition list --query "[?contains(displayName, '<keyword>')]" -o table`. Definition IDs are stable; display names evolve (e.g., "purge protection" → "deletion protection") |
+| Skill reports ⚠️ for a policy already enforced via initiative | `assigned_policies` lookup keyed on individual policy IDs; initiative members aren't expanded | Cross-check `assigned_initiatives` in the policy-state JSON — if MCSB (`1f3afdf9-d0c9-4c3d-847f-89da613e70a8`) is assigned, 200+ individual policies are covered indirectly. Filed as a known limitation; expansion via `az policy set-definition show --query "policyDefinitions[].policyDefinitionId"` is on the roadmap |
+| `microsoft_docs_search` returns stale or empty results | MCP server not configured, or Microsoft Learn page moved | Fall back to `microsoft_docs_fetch` with the canonical URL from `references/ms-learn-policy-pages.md` (built-in policies index) |

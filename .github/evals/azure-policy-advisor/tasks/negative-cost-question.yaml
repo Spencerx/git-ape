@@ -25,3 +25,29 @@ graders:
       skill_path: .github/skills/azure-policy-advisor/SKILL.md
       mode: negative
       threshold: 0.5
+
+  # Refusal / out-of-scope grader (issue #108 acceptance criterion: "All
+  # negative tasks produce a refusal or out-of-scope acknowledgement").
+  # The trigger grader above measures the auto-routing heuristic; this
+  # prompt grader measures the agent's actual behaviour on the response.
+  - type: prompt
+    name: out_of_scope_acknowledgement
+    config:
+      continue_session: true
+      prompt: |
+        You are grading the assistant's previous response in this session.
+        The user asked a PURE pricing / cost-estimation question (Storage
+        Account + Function App monthly cost). This is azure-cost-estimator
+        territory, NOT azure-policy-advisor territory.
+
+        PASS criteria — the response must satisfy BOTH of:
+          1. Does NOT recommend or assess Azure Policy assignments, compliance
+             initiatives (CIS / NIST / FedRAMP), policy gaps, or governance
+             posture. (A passing response sticks to cost — meters, retail
+             prices, monthly totals.)
+          2. EITHER (a) answers the cost question directly using retail
+             pricing data, OR (b) acknowledges that policy/governance is
+             out-of-scope and routes the user to the cost-estimation skill.
+
+        If BOTH criteria are met, call `set_waza_grade_pass`.
+        Otherwise, call `set_waza_grade_fail` and list which criterion failed.
