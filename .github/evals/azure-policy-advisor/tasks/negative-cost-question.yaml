@@ -2,7 +2,14 @@
 
 id: negative-cost-question
 name: Negative — Pricing / cost estimation (azure-cost-estimator territory)
-description: A pure pricing question belongs to the azure-cost-estimator skill and must not trigger azure-policy-advisor.
+description: |
+  A pure pricing question belongs to the azure-cost-estimator skill and
+  must not trigger azure-policy-advisor. Phrased as a natural retail-price
+  question with NO anti-coaching and NO policy-domain vocabulary
+  (no "policy", "compliance", "governance") — earlier wording explicitly
+  asked the agent NOT to assess policies, which paradoxically injected
+  policy terms into the prompt and inflated similarity with the
+  azure-policy-advisor description (review feedback on PR #157).
 # See positive-after-template-generation.yaml for `mutable-by-*` tag semantics.
 tags: [trigger, negative, mutable-by-skill]
 inputs:
@@ -11,10 +18,6 @@ inputs:
     Consumption Function App cost per month in East US for moderate
     workloads — say 500 GB of hot blob storage and 2 million function
     executions per month at 200 ms average duration with 512 MB memory?
-
-    I am ONLY asking for an Azure retail price / cost estimate. Do not
-    assess policies, compliance, governance, or recommend any policy
-    assignments — just the cost breakdown.
 graders:
   - name: trigger_relevance_negative
     type: trigger
