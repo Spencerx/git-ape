@@ -100,7 +100,7 @@ steps:
     with:
       client-id: ${{ secrets.AZURE_CLIENT_ID }}
       tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-      subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 ```
 
 **OIDC requires a federated credential** configured on an Azure AD App Registration or User-Assigned Managed Identity. The agent should NOT create these — they must be pre-configured.
