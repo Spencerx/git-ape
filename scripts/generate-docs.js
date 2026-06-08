@@ -94,6 +94,20 @@ function rewriteSkillLinks(body, skillDir) {
   });
 }
 
+// Rewrite cross-references to a skill's `SKILL.md` into docusaurus-friendly slug links.
+// Source files link to skills via relative paths like `../skills/<name>/SKILL.md` (from
+// agent sources) or `../<name>/SKILL.md` (from sibling skill sources). The generated
+// docusaurus pages live at `docs/skills/<slug>.md`, so rewrite the target to the slug
+// using the supplied base (`../skills/` from agent pages, `./` from skill pages).
+function rewriteSkillRefLinks(body, targetBase) {
+  return body.replace(/(\[[^\]\n]+\])\(([^)\s]+\/SKILL\.md)\)/g, (_match, label, url) => {
+    if (/^https?:\/\//i.test(url)) return `${label}(${url})`;
+    const segments = url.replace(/\/SKILL\.md$/, '').split('/');
+    const skillName = segments[segments.length - 1];
+    return `${label}(${targetBase}${slugify(skillName)})`;
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Agent doc generation
 // ---------------------------------------------------------------------------
@@ -123,7 +137,7 @@ function generateAgentDocs() {
     agents.push({ name, slug, description, userInvocable, file });
 
     // Extract meaningful body (skip the frontmatter warning section, keep substance)
-    const bodyTrimmed = rewriteAgentLinks(body.trim());
+    const bodyTrimmed = rewriteSkillRefLinks(rewriteAgentLinks(body.trim()), '../skills/');
 
     let content = `---
 title: "${name}"
@@ -262,7 +276,7 @@ function generateSkillDocs() {
 
     skills.push({ name, slug, description, userInvocable, phase, dir });
 
-    const bodyTrimmed = rewriteSkillLinks(body.trim(), dir);
+    const bodyTrimmed = rewriteSkillRefLinks(rewriteSkillLinks(body.trim(), dir), './');
 
     let content = `---
 title: "${toTitleCase(name)}"

@@ -25,7 +25,7 @@ description: "Run an Azure Deployment Stack create (subscription scope) for a pr
 
 # Azure Stack Deploy
 
-Deploy a Git-Ape deployment artifact as a subscription-scoped **Azure Deployment Stack** (`az stack sub create --action-on-unmanage deleteAll`). The stack is the lifecycle owner of every resource the template creates — across resource groups and subscription scope — which makes destroy idempotent in a single call (see [`azure-stack-destroy`](../azure-stack-destroy/SKILL.md)).
+Deploy a Git-Ape deployment artifact as a subscription-scoped **Azure Deployment Stack** (`az stack sub create --action-on-unmanage deleteAll`). The stack is the lifecycle owner of every resource the template creates — across resource groups and subscription scope — which makes destroy idempotent in a single call (see [`azure-stack-destroy`](./azure-stack-destroy)).
 
 This skill produces the **same `state.json`** schema (`schemaVersion: "1.0"`) as the CI workflow at `.github/workflows/git-ape-deploy.yml`, so local deployments and pipeline deployments are interchangeable.
 
@@ -37,8 +37,8 @@ This skill produces the **same `state.json`** schema (`schemaVersion: "1.0"`) as
 
 ## Do NOT use for
 
-- **Tearing down / destroying** an existing deployment — use [`azure-stack-destroy`](../azure-stack-destroy/SKILL.md) instead
-- **What-if preview / preflight validation** without deploying — use [`azure-deployment-preflight`](../azure-deployment-preflight/SKILL.md) instead
+- **Tearing down / destroying** an existing deployment — use [`azure-stack-destroy`](./azure-stack-destroy) instead
+- **What-if preview / preflight validation** without deploying — use [`azure-deployment-preflight`](./azure-deployment-preflight) instead
 - **Off-topic** (non-Azure, non-deployment) requests
 - Generating or editing ARM templates — use `azure-prepare` or another IaC authoring skill
 
@@ -159,7 +159,7 @@ See [website/docs/deployment/state.md](../../../website/docs/deployment/state.md
 
 `Microsoft.KeyVault/vaults`, `Microsoft.CognitiveServices/accounts`, `Microsoft.AppConfiguration/configurationStores`, `Microsoft.ApiManagement/service`, `Microsoft.MachineLearningServices/workspaces`, `Microsoft.RecoveryServices/vaults`.
 
-The destroy skill ([`azure-stack-destroy`](../azure-stack-destroy/SKILL.md)) consumes the `softDeletable` and `purgeProtected` fields to drive its purge sweep.
+The destroy skill ([`azure-stack-destroy`](./azure-stack-destroy)) consumes the `softDeletable` and `purgeProtected` fields to drive its purge sweep.
 
 ## Failure modes
 
@@ -172,6 +172,6 @@ The destroy skill ([`azure-stack-destroy`](../azure-stack-destroy/SKILL.md)) con
 
 ## Related
 
-- [`azure-stack-destroy`](../azure-stack-destroy/SKILL.md) — the matching destroy skill (single source of truth: `stackId`)
-- [`azure-deployment-preflight`](../azure-deployment-preflight/SKILL.md) — what-if and permission checks BEFORE deploy
-- [`azure-security-analyzer`](../azure-security-analyzer/SKILL.md) — security gate (BLOCKING) before deploy confirmation
+- [`azure-stack-destroy`](./azure-stack-destroy) — the matching destroy skill (single source of truth: `stackId`)
+- [`azure-deployment-preflight`](./azure-deployment-preflight) — what-if and permission checks BEFORE deploy
+- [`azure-security-analyzer`](./azure-security-analyzer) — security gate (BLOCKING) before deploy confirmation

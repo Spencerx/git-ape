@@ -61,7 +61,7 @@ Refuse to invoke this skill in any of these cases:
 ## When to Use
 
 - User says: "destroy this deployment", "tear down deploy-XXX", "clean up the stack"
-- Pair with the matching [`azure-stack-deploy`](../azure-stack-deploy/SKILL.md) — same stack, same `state.json` key (`stackId`)
+- Pair with the matching [`azure-stack-deploy`](./azure-stack-deploy) — same stack, same `state.json` key (`stackId`)
 - Any time you would otherwise run `az group delete` against a Git-Ape deployment (don't — you'll miss soft-delete cleanup and multi-RG resources)
 
 ## Prerequisites
@@ -193,6 +193,6 @@ Retained: 1 soft-deleted resource(s) (purge-protected)
 
 ## Related
 
-- [`azure-stack-deploy`](../azure-stack-deploy/SKILL.md) — the matching deploy skill (writes the `state.json` this skill consumes)
-- [`azure-drift-detector`](../azure-drift-detector/SKILL.md) — check for unmanaged drift BEFORE destroy
-- [`azure-resource-visualizer`](../azure-resource-visualizer/SKILL.md) — visualize what's in the stack before tearing it down
+- [`azure-stack-deploy`](./azure-stack-deploy) — the matching deploy skill (writes the `state.json` this skill consumes)
+- [`azure-drift-detector`](./azure-drift-detector) — check for unmanaged drift BEFORE destroy
+- [`azure-resource-visualizer`](./azure-resource-visualizer) — visualize what's in the stack before tearing it down
