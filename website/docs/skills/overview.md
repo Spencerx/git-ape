@@ -44,8 +44,8 @@ Skills are focused capabilities invoked by agents at specific stages of the depl
 
 | Skill | Description | Invocable |
 |-------|-------------|:---------:|
-| [Azure Stack Deploy](./azure-stack-deploy) | Deploy an ARM template as a subscription-scoped Azure Deployment Stack (idempotent across resource groups and sub-scope). Captures managed resources, classifies soft-deletable types, detects Key Vault purge protection, and writes extended state.json (schemaVersion 1.0). Use for any local CLI / VS Code Git-Ape deployment so the result matches the CI workflow. | ✅ |
-| [Azure Stack Destroy](./azure-stack-destroy) | Destroy a Git-Ape deployment by deleting its Azure Deployment Stack with --action-on-unmanage deleteAll, then purging soft-deleted resources (Key Vault, Cognitive Services) that are not purge-protected. Reads state.json (schemaVersion 1.0) to know exactly what to clean up. Use for any local CLI / VS Code Git-Ape teardown so the result matches the CI workflow. | ✅ |
+| [Azure Stack Deploy](./azure-stack-deploy) | Run an Azure Deployment Stack create (subscription scope) for a prepared Git-Ape deployment artifact and write state.json (schemaVersion 1.0). Use locally so the result matches the CI deploy workflow. | ✅ |
+| [Azure Stack Destroy](./azure-stack-destroy) | Tear down a Git-Ape deployment by ID. Reads `state.json` under `.azure/deployments/<id>/` to delete the Azure Deployment Stack and purge soft-deleted Key Vault / Cognitive Services. Refuses to run without `state.json`. Use for any local CLI or VS Code Git-Ape teardown so the result matches the CI destroy workflow. | ✅ |
 
 ## Skill Invocation in Deployment Flow
 

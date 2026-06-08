@@ -121,7 +121,7 @@ Git-Ape can run in two modes. Detect which mode is active and adapt behavior acc
 - The agent generates deployment artifacts and commits them to the branch
 - **GitHub Actions workflows handle the rest automatically:**
   - `git-ape-plan.yml` — runs on PR open/update, validates template + runs what-if, posts plan as PR comment
-  - `git-ape-deploy.yml` — runs on PR merge to main OR on `/deploy` comment (requires PR approval)
+  - `git-ape-deploy.yml` — runs on PR merge to main (requires PR approval via branch protection)
   - `git-ape-destroy.yml` — runs on PR merge when `metadata.json` status is `destroy-requested`
 - The agent should **NOT execute `az deployment` commands directly** in headless mode — commit the files and let the workflows handle it
 
@@ -138,7 +138,7 @@ Git-Ape can run in two modes. Detect which mode is active and adapt behavior acc
 | Template | Generate + show preview | Generate + commit to branch |
 | Validation | Run locally | `git-ape-plan.yml` runs on PR, posts what-if as comment |
 | Confirmation | Ask user interactively | PR approval = confirmation |
-| Deployment | Execute immediately | `git-ape-deploy.yml` runs on merge or `/deploy` comment |
+| Deployment | Execute immediately | `git-ape-deploy.yml` runs on merge to main |
 | Destroy | Execute via `az stack sub delete --action-on-unmanage deleteAll` after confirmation, then purge soft-deletables | PR sets `metadata.json` status to `destroy-requested` → merge triggers `git-ape-destroy.yml` (same stack-based flow + soft-delete purge) |
 | Results | Display in chat | Posted as PR/issue comment + state committed to repo |
 
