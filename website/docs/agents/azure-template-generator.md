@@ -48,14 +48,14 @@ This agent is a thin orchestrator over the following skills. Do not duplicate th
 
 | Stage | Skill | Why |
 |-------|-------|-----|
-| Step 0 (lookup) | [`/azure-rest-api-reference`](../skills/azure-rest-api-reference/SKILL.md) | Get exact property schemas, required fields, valid enum values, latest stable API version per resource type. **Mandatory before writing any resource.** |
-| Step 0 (lookup) | [`/azure-naming-research`](../skills/azure-naming-research/SKILL.md) | CAF abbreviation, length / charset constraints, uniqueness scope. **Mandatory before naming any resource.** |
-| Step 1 (write) | [`/azure-role-selector`](../skills/azure-role-selector/SKILL.md) | Least-privilege RBAC role lookup — returns the GUIDs for `Storage Blob Data Owner`, `Storage Account Contributor`, etc. Do NOT hardcode GUIDs in the agent. |
-| Step 2 (assess) | [`/azure-security-analyzer`](../skills/azure-security-analyzer/SKILL.md) | Per-resource security best practices assessment + the BLOCKING security gate |
-| Step 2 (assess) | [`/azure-policy-advisor`](../skills/azure-policy-advisor/SKILL.md) | Azure Policy compliance check against CIS / NIST / org framework (advisory) |
-| Step 2 (assess) | [`/azure-resource-availability`](../skills/azure-resource-availability/SKILL.md) | Validate SKU + API version availability in target region + subscription quota (BLOCKING) |
-| Step 2 (assess) | [`/azure-deployment-preflight`](../skills/azure-deployment-preflight/SKILL.md) | What-if analysis showing what will Create / Modify / Delete |
-| Step 2 (assess) | [`/azure-cost-estimator`](../skills/azure-cost-estimator/SKILL.md) | Real pricing from Azure Retail Prices API |
+| Step 0 (lookup) | [`/azure-rest-api-reference`](../skills/azure-rest-api-reference) | Get exact property schemas, required fields, valid enum values, latest stable API version per resource type. **Mandatory before writing any resource.** |
+| Step 0 (lookup) | [`/azure-naming-research`](../skills/azure-naming-research) | CAF abbreviation, length / charset constraints, uniqueness scope. **Mandatory before naming any resource.** |
+| Step 1 (write) | [`/azure-role-selector`](../skills/azure-role-selector) | Least-privilege RBAC role lookup — returns the GUIDs for `Storage Blob Data Owner`, `Storage Account Contributor`, etc. Do NOT hardcode GUIDs in the agent. |
+| Step 2 (assess) | [`/azure-security-analyzer`](../skills/azure-security-analyzer) | Per-resource security best practices assessment + the BLOCKING security gate |
+| Step 2 (assess) | [`/azure-policy-advisor`](../skills/azure-policy-advisor) | Azure Policy compliance check against CIS / NIST / org framework (advisory) |
+| Step 2 (assess) | [`/azure-resource-availability`](../skills/azure-resource-availability) | Validate SKU + API version availability in target region + subscription quota (BLOCKING) |
+| Step 2 (assess) | [`/azure-deployment-preflight`](../skills/azure-deployment-preflight) | What-if analysis showing what will Create / Modify / Delete |
+| Step 2 (assess) | [`/azure-cost-estimator`](../skills/azure-cost-estimator) | Real pricing from Azure Retail Prices API |
 
 ## Output Styling
 
@@ -68,7 +68,7 @@ see [git-ape.agent.md](git-ape).
 
 **Two skill invocations are mandatory before you write a single resource block.** Skipping either step is the #1 cause of preventable deployment failures (wrong property names, expired API versions, invalid characters, length overruns).
 
-**0a. Property and API version lookup** — Invoke [`/azure-rest-api-reference`](../skills/azure-rest-api-reference/SKILL.md) for every resource type in the deployment. The skill returns:
+**0a. Property and API version lookup** — Invoke [`/azure-rest-api-reference`](../skills/azure-rest-api-reference) for every resource type in the deployment. The skill returns:
 - Latest stable (non-preview) API version
 - Required vs optional properties
 - Valid enum values per property
@@ -76,7 +76,7 @@ see [git-ape.agent.md](git-ape).
 
 Never rely on memorized schemas. Re-invoke whenever you change the API version of an existing resource.
 
-**0b. Naming research** — Invoke [`/azure-naming-research`](../skills/azure-naming-research/SKILL.md) for every resource type. The skill returns:
+**0b. Naming research** — Invoke [`/azure-naming-research`](../skills/azure-naming-research) for every resource type. The skill returns:
 - CAF abbreviation (e.g. `func`, `st`, `kv`, `cae`)
 - Length min / max
 - Valid character set (alphanumeric, hyphens, lowercase-only, etc.)
@@ -245,7 +245,7 @@ Many Azure subscriptions enforce `allowSharedKeyAccess: false` via Azure Policy.
 
 **Required RBAC Roles for Function App → Storage:**
 
-Do NOT hardcode role definition GUIDs in this agent. Invoke [`/azure-role-selector`](../skills/azure-role-selector/SKILL.md) with the resource pair (e.g. "Function App needs blob + file share access on Storage Account") and use the GUIDs the skill returns. The skill encodes least-privilege — it will recommend `Storage Blob Data Owner` (`b7e6dc6d-f1e8-4753-8033-0f276bb0955b`) + `Storage Account Contributor` (`17d1049b-9a84-46fb-8f53-869881c3d3ab`) for this specific pair, or narrower roles (`Storage Blob Data Contributor`, `Storage File Data SMB Share Contributor`) when full ownership is not needed.
+Do NOT hardcode role definition GUIDs in this agent. Invoke [`/azure-role-selector`](../skills/azure-role-selector) with the resource pair (e.g. "Function App needs blob + file share access on Storage Account") and use the GUIDs the skill returns. The skill encodes least-privilege — it will recommend `Storage Blob Data Owner` (`b7e6dc6d-f1e8-4753-8033-0f276bb0955b`) + `Storage Account Contributor` (`17d1049b-9a84-46fb-8f53-869881c3d3ab`) for this specific pair, or narrower roles (`Storage Blob Data Contributor`, `Storage File Data SMB Share Contributor`) when full ownership is not needed.
 
 The GUIDs above appear in the example block only so you can verify the skill output matches — do not copy them into new templates without running the skill first.
 
@@ -270,17 +270,17 @@ The GUIDs above appear in the example block only so you can verify the skill out
 
 #### General Best Practices
 
-These are **write-time guardrails** — apply them while assembling resource blocks so the template starts in a known-good state. The full assessment runs in Step 3 via [`/azure-security-analyzer`](../skills/azure-security-analyzer/SKILL.md), which has the complete severity-tagged checklist per resource type. Do not duplicate that checklist here.
+These are **write-time guardrails** — apply them while assembling resource blocks so the template starts in a known-good state. The full assessment runs in Step 3 via [`/azure-security-analyzer`](../skills/azure-security-analyzer), which has the complete severity-tagged checklist per resource type. Do not duplicate that checklist here.
 
 For **ALL resources**:
-- ✓ Use latest **stable** API versions — returned by [`/azure-rest-api-reference`](../skills/azure-rest-api-reference/SKILL.md) in Step 0a; never hardcode
-- ✓ Use names returned by [`/azure-naming-research`](../skills/azure-naming-research/SKILL.md) in Step 0b
+- ✓ Use latest **stable** API versions — returned by [`/azure-rest-api-reference`](../skills/azure-rest-api-reference) in Step 0a; never hardcode
+- ✓ Use names returned by [`/azure-naming-research`](../skills/azure-naming-research) in Step 0b
 - ✓ Enable diagnostic settings and logging
 - ✓ Apply resource tags from workspace standards
 - ✓ Use `dependsOn` for proper ordering
 - ✓ Output resource IDs and endpoints
 - ✓ **Use managed identity for all inter-resource access** (no keys/secrets)
-- ✓ **Include RBAC role assignments** with GUIDs from [`/azure-role-selector`](../skills/azure-role-selector/SKILL.md), not from memory
+- ✓ **Include RBAC role assignments** with GUIDs from [`/azure-role-selector`](../skills/azure-role-selector), not from memory
 
 **Non-negotiable identity patterns** — these are write-time, not assessment-time, because once a template ships with shared keys / connection strings it is hard to retrofit:
 
@@ -728,7 +728,7 @@ After showing the preview, provide the complete ARM template:
 
 ## Deployment Commands
 
-The canonical deploy and destroy paths live in the [`azure-stack-deploy`](../skills/azure-stack-deploy/SKILL.md) and [`azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md) skills. The commands below are reference recipes — prefer invoking the skills so local CLI / VS Code and CI pipelines stay in sync.
+The canonical deploy and destroy paths live in the [`azure-stack-deploy`](../skills/azure-stack-deploy) and [`azure-stack-destroy`](../skills/azure-stack-destroy) skills. The commands below are reference recipes — prefer invoking the skills so local CLI / VS Code and CI pipelines stay in sync.
 
 **Azure CLI (Subscription-scoped Deployment Stack — preferred):**
 ```bash

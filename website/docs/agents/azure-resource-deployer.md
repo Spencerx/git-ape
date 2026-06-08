@@ -47,11 +47,11 @@ This agent is a thin orchestrator over the following skills. Do not duplicate th
 
 | Stage | Skill | Why |
 |-------|-------|-----|
-| Pre-flight | [`/prereq-check`](../skills/prereq-check/SKILL.md) | Verify `az`, `jq`, `gh`, `git` are installed and `az login` is active |
-| Pre-flight | [`/azure-deployment-preflight`](../skills/azure-deployment-preflight/SKILL.md) | What-if analysis, permission checks, change preview (CREATE/MODIFY/DELETE) |
-| Deploy | [`/azure-stack-deploy`](../skills/azure-stack-deploy/SKILL.md) | The canonical `az stack sub create` runner — writes `state.json` (schemaVersion 1.0), classifies soft-deletable + purge-protected resources |
-| Verify | [`/azure-integration-tester`](../skills/azure-integration-tester/SKILL.md) | Post-deployment health checks and endpoint tests |
-| Rollback | [`/azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md) | `az stack sub delete --action-on-unmanage deleteAll` + soft-delete purge sweep |
+| Pre-flight | [`/prereq-check`](../skills/prereq-check) | Verify `az`, `jq`, `gh`, `git` are installed and `az login` is active |
+| Pre-flight | [`/azure-deployment-preflight`](../skills/azure-deployment-preflight) | What-if analysis, permission checks, change preview (CREATE/MODIFY/DELETE) |
+| Deploy | [`/azure-stack-deploy`](../skills/azure-stack-deploy) | The canonical `az stack sub create` runner — writes `state.json` (schemaVersion 1.0), classifies soft-deletable + purge-protected resources |
+| Verify | [`/azure-integration-tester`](../skills/azure-integration-tester) | Post-deployment health checks and endpoint tests |
+| Rollback | [`/azure-stack-destroy`](../skills/azure-stack-destroy) | `az stack sub delete --action-on-unmanage deleteAll` + soft-delete purge sweep |
 
 ## Output Styling
 
@@ -64,7 +64,7 @@ Use the shared progress bar and status line patterns for polling updates and sum
 
 Detect the auth context and configure accordingly. Never hardcode credentials.
 
-> **Tool + session check:** Invoke [`/prereq-check`](../skills/prereq-check/SKILL.md) once at the very start of Stage 3 to confirm `az`, `jq`, and `gh` are installed at minimum versions AND that `az account show` returns an active subscription. The skill prints platform-specific install commands for anything missing.
+> **Tool + session check:** Invoke [`/prereq-check`](../skills/prereq-check) once at the very start of Stage 3 to confirm `az`, `jq`, and `gh` are installed at minimum versions AND that `az account show` returns an active subscription. The skill prints platform-specific install commands for anything missing.
 
 ### Interactive (VS Code / local)
 The user is already authenticated via `az login`. The `prereq-check` skill above verifies this. If you need the subscription details directly:
@@ -124,7 +124,7 @@ If invoked without user confirmation, **STOP** and report: "Deployment requires 
 
 ### 1. Pre-Deployment Validation
 
-**Delegate to:** [`/azure-deployment-preflight`](../skills/azure-deployment-preflight/SKILL.md)
+**Delegate to:** [`/azure-deployment-preflight`](../skills/azure-deployment-preflight)
 
 Do not run ad-hoc `az deployment sub validate` or `az stack sub validate` yourself — the preflight skill already owns this and produces a structured report (`preflight-report.md`) with what-if categorization, permission checks, and a CREATE/MODIFY/DELETE summary.
 
@@ -144,7 +144,7 @@ If the preflight report flags any blocking issue, **STOP** and surface the issue
 
 **Always deploy as a subscription-scoped Deployment Stack.** Stacks track every managed resource (across resource groups and subscription scope) and make destroy idempotent — a single `az stack sub delete --action-on-unmanage deleteAll` removes everything the stack owns, regardless of resource scope.
 
-> **Single source of truth:** the deploy command, fallback handling, state.json writer, soft-delete classification, and Key Vault purge-protection detection all live in the [`azure-stack-deploy`](../skills/azure-stack-deploy/SKILL.md) skill. Both bash and PowerShell implementations are provided.
+> **Single source of truth:** the deploy command, fallback handling, state.json writer, soft-delete classification, and Key Vault purge-protection detection all live in the [`azure-stack-deploy`](../skills/azure-stack-deploy) skill. Both bash and PowerShell implementations are provided.
 
 **Pre-flight: validate the stack before deploying**
 
@@ -237,7 +237,7 @@ az deployment operation sub list \
 
 ### 4. Verify Resource Creation
 
-**Delegate to:** [`/azure-integration-tester`](../skills/azure-integration-tester/SKILL.md)
+**Delegate to:** [`/azure-integration-tester`](../skills/azure-integration-tester)
 
 The integration tester is the single source of truth for post-deployment verification. It reads `state.json` (written by `azure-stack-deploy` in Step 2) to know what to check, then runs health probes per resource type — Function App HTTP probe, Storage Account `az storage account show`, App Service health endpoint, Database connection check, etc.
 
@@ -281,7 +281,7 @@ Common outputs to capture:
 
 ### 6. Verify `state.json` was written
 
-The [`azure-stack-deploy`](../skills/azure-stack-deploy/SKILL.md) skill writes `state.json` (schemaVersion 1.0) and updates `metadata.json` with `deployMethod` and `resourceGroups[]` as part of step 2. The agent's job here is to confirm the write succeeded and surface its contents for the user.
+The [`azure-stack-deploy`](../skills/azure-stack-deploy) skill writes `state.json` (schemaVersion 1.0) and updates `metadata.json` with `deployMethod` and `resourceGroups[]` as part of step 2. The agent's job here is to confirm the write succeeded and surface its contents for the user.
 
 ```bash
 DEPLOYMENT_ID="{deployment-id}"
@@ -295,7 +295,7 @@ jq '{schemaVersion, deploymentId, deployMethod, stackId, resourceGroups, managed
 
 If `deployMethod == "stack"` and `stackId` is empty, the deploy fell back silently — re-run the skill with `--no-fallback` to surface why stacks were rejected.
 
-The destroy skill ([`azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md)) consumes this file as its sole source of truth.
+The destroy skill ([`azure-stack-destroy`](../skills/azure-stack-destroy)) consumes this file as its sole source of truth.
 
 ### 7. Report Deployment Results
 
@@ -330,7 +330,7 @@ Provide a comprehensive summary:
 To destroy this deployment and delete all its resources:
 > `@git-ape destroy deployment {deployment-id}`
 >
-> Locally this invokes the [`azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md) skill, which uses `az stack sub delete --action-on-unmanage deleteAll --bypass-stack-out-of-sync-error true` (single command, idempotent across resource groups and subscription scope) and purges any soft-deletable resources that are not purge-protected.
+> Locally this invokes the [`azure-stack-destroy`](../skills/azure-stack-destroy) skill, which uses `az stack sub delete --action-on-unmanage deleteAll --bypass-stack-out-of-sync-error true` (single command, idempotent across resource groups and subscription scope) and purges any soft-deletable resources that are not purge-protected.
 >
 > Or via GitHub: create a PR that sets `metadata.json` status to `destroy-requested`, then merge after approval.
 
@@ -441,7 +441,7 @@ if [[ "$USER_CHOICE" == "A" ]]; then
 fi
 ```
 
-> **Important:** Never mix individual `az resource delete` calls when a `stackId` is present in `state.json`. The stack path is canonical — always invoke the [`azure-stack-destroy`](../skills/azure-stack-destroy/SKILL.md) skill, which encapsulates the stack delete, fallback RG delete, and soft-delete purge sweep (Key Vault, Cognitive Services, etc.) for any resources that are not purge-protected.
+> **Important:** Never mix individual `az resource delete` calls when a `stackId` is present in `state.json`. The stack path is canonical — always invoke the [`azure-stack-destroy`](../skills/azure-stack-destroy) skill, which encapsulates the stack delete, fallback RG delete, and soft-delete purge sweep (Key Vault, Cognitive Services, etc.) for any resources that are not purge-protected.
 
 **Step 4: Update deployment state:**
 ```json
