@@ -1,5 +1,68 @@
 # Changelog
 
+## [0.2.0] - 2026-06-10
+
+Changes since [v0.1.1](https://github.com/Azure/git-ape/releases/tag/v0.1.1):
+
+### Features
+
+- **skills:** emit partially-destroyed in local destroy scripts (`95dc3de`)
+- **extension:** register prompt files in VSIX and tighten .vscodeignore (`4b2a1b8`)
+- **onboarding:** replace exampleyml stubs with template-driven scaffold (`451686a`)
+- **skills:** refine azure-stack-deploy and azure-stack-destroy guidance (`904a7dd`)
+- **agents:** delegate to skills in deployer and template-generator (`a1d5633`)
+- add azure-stack-* skills with fast async destroy (`69113e4`)
+- implement Deployment Stacks for idempotent destroy + extended state schema (`79df223`)
+
+### Bug Fixes
+
+- **docs:** rewrite cross-skill SKILL.md links to resolvable slugs (`bc89221`)
+- **docs:** read AZURE_SUBSCRIPTION_ID from vars in agent and example workflows (`8c1ca1b`)
+- **workflows:** run release main-history guard for workflow_dispatch (`2bb671f`)
+- **onboarding:** set AZURE_SUBSCRIPTION_ID as a variable, not a secret (`de50e71`)
+- **onboarding:** sync copilot-instructions template with merged mirror (`e0ae84c`)
+- **workflows:** route parameters.json values through env to block injection (`dce5833`)
+- **onboarding:** remove /deploy comment trigger and fail loud on state push (`afb05ea`)
+- **onboarding:** harden scaffolded workflows against matrix.deployment_id injection (`59c303e`)
+- **workflows:** preserve FAILED counter in subscription resource cleanup (`236e840`)
+- **onboarding:** harden and correct scaffolded workflows (`d6b41dc`)
+- **workflows:** prevent shell and JS injection in deploy/destroy (`b2325f3`)
+- **skills:** resolve PR review findings for deployment stacks (`9f14080`)
+- **workflows:** address PR review findings (`9190c66`)
+- **workflows:** prevent post-tag release version drift (`702f01c`)
+- **plugin:** bump marketplace.json to 0.1.0 to match plugin.json (`6e017ab`)
+
+### Documentation
+
+- **website:** add companion page for git-ape-drift agentic workflow source (`e66e2ec`)
+- **website:** regenerate for templated workflows and prompt assets (`7137093`)
+- **instructions:** switch deploy/destroy guidance to Azure Deployment Stacks (`1fb61bd`)
+- **onboarding:** reconcile AZURE_SUBSCRIPTION_ID as a variable (`67005a7`)
+- drop /deploy comment trigger references (`d3cb045`)
+- regenerate agent and workflow docs after upstream merge (`98c6318`)
+- regenerate website docs from source (`4b07b5f`)
+
+### Chores
+
+- **models:** rename gpt-5-codex to gpt-5.3-codex across eval matrix (`8d5b9cf`)
+- **evals:** pin LLM-as-judge to claude-opus-4.7 to eliminate self-grading bias (`c263d48`)
+- **workflows:** recompile daily-repo-status lockfile against current source (`7a81254`)
+- **evals:** fix stale judge model in waza-evals PR comment header (`6f2d00b`)
+- **evals:** address PR review feedback on judge-model pin (`190887c`)
+- **actionlint:** exclude gh-aw compiler output from lint (`f364da5`)
+- regenerate gh-aw lock files with v0.76.1 (`175f81a`)
+
+### Dependencies
+
+- **website:** bump react group (`a56bcec`)
+- **actions:** bump github/gh-aw-actions (`2ee8546`)
+- **website:** bump js-yaml (`9cd63b0`)
+- **website:** bump @types/react (`8e75378`)
+
+### Tests
+
+- **evals:** add evals for azure-stack-deploy and azure-stack-destroy (`ed078a0`)
+
 ## [0.1.1] - 2026-05-28
 
 Changes since [v0.1.0](https://github.com/Azure/git-ape/releases/tag/v0.1.0):
