@@ -46,6 +46,7 @@ This skill configures:
 4. GitHub environments (`azure-deploy*`, `azure-destroy`)
 5. Required GitHub secrets (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`) and the `AZURE_SUBSCRIPTION_ID` variable
 6. Scaffolded GitHub Actions workflow files (`git-ape-plan.yml`, `-deploy.yml`, `-destroy.yml`, `-verify.yml`, `-drift.{md,lock.yml}`) and deployment standards (`.github/copilot-instructions.md`) into the user's working copy
+7. *(Optional)* The `COPILOT_GITHUB_TOKEN` repository secret that powers the agentic drift-detection workflow (`git-ape-drift.lock.yml`) — only when the user opts into scheduled drift detection
 
 ## Prerequisites
 
@@ -126,8 +127,9 @@ OIDC_PREFIX="repository_owner_id:<OWNER_ID>:repository_id:<REPO_ID>"
 7. Set GitHub repo or environment secrets (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`) and the `AZURE_SUBSCRIPTION_ID` variable.
 8. Create GitHub environments and branch policies when permissions allow.
 9. Scaffold workflow files and deployment standards into the user's working copy (see below).
-10. Capture compliance and Azure Policy preferences (see below).
-11. Verify federated credentials, role assignments, and secrets.
+10. *(Optional)* Provision the drift detector engine credential (`COPILOT_GITHUB_TOKEN`) so the agentic drift workflow can run (see below).
+11. Capture compliance and Azure Policy preferences (see below).
+12. Verify federated credentials, role assignments, and secrets.
 
 ### Step 9: Scaffold workflow files and deployment standards
 
@@ -167,9 +169,61 @@ The helper:
   canonical template so the user can reconcile manually.
 
 If the user already had a custom `.github/copilot-instructions.md`, the
-scaffold step skips it. Step 10 (below) handles that case explicitly.
+scaffold step skips it. Step 11 (below) handles that case explicitly.
 
-### Step 10: Compliance & Azure Policy Preferences
+### Step 10: (Optional) Onboard the drift detector workflow
+
+**This step is optional.** It is only needed if the user wants the scheduled
+**drift-detection** workflow (`git-ape-drift.lock.yml`) to run. The `plan`,
+`deploy`, `destroy`, and `verify` workflows do **not** depend on anything from
+this step — skip it entirely if the user is not enabling drift detection.
+
+Unlike the other scaffolded workflows, `git-ape-drift` is a **GitHub Agentic
+Workflow** (authored with [gh-aw](https://github.github.com/gh-aw/)) that runs
+on the **GitHub Copilot engine**. Its compiled `.lock.yml` opens with a hard
+preflight gate — *"Validate COPILOT_GITHUB_TOKEN secret"* — that fails the run
+immediately when the credential is missing. There is **no fallback**: the Azure
+OIDC secrets from Step 7 cover the workflow's deterministic pre-steps, but the
+agent itself needs its own engine token.
+
+To onboard it:
+
+1. **Confirm intent.** Ask the user whether they want scheduled drift
+   detection. If not, skip this step.
+
+2. **Provision `COPILOT_GITHUB_TOKEN`** as a **repository** secret — not an
+   environment secret, because the daily `schedule` runs from `main` with no
+   environment attached:
+   ```bash
+   gh secret set COPILOT_GITHUB_TOKEN --repo <org>/<repo>
+   # paste the token when prompted — never pass it on the command line
+   ```
+   Token requirements:
+   - A GitHub **PAT** (fine-grained or classic) belonging to an identity with
+     an **active GitHub Copilot seat**.
+   - The built-in `GITHUB_TOKEN` **cannot** drive the Copilot engine, so the
+     token must be supplied explicitly.
+   - The other gh-aw tokens (`GH_AW_GITHUB_TOKEN`,
+     `GH_AW_GITHUB_MCP_SERVER_TOKEN`) are **not** required — they fall back to
+     the auto-provided `GITHUB_TOKEN`.
+
+3. **(Only if recompiling.)** The scaffolded `.lock.yml` runs as-is. The
+   `gh-aw` CLI is needed **only** when the user edits `git-ape-drift.md` and
+   wants to regenerate the lock file:
+   ```bash
+   gh extension install github/gh-aw
+   gh aw compile
+   ```
+
+4. **Smoke-test** the workflow end to end:
+   ```bash
+   gh workflow run git-ape-drift.lock.yml --repo <org>/<repo>
+   gh run list --workflow git-ape-drift.lock.yml --repo <org>/<repo> --limit 1
+   ```
+
+Never print the token value in chat output (see Safe-Execution Rules).
+
+### Step 11: Compliance & Azure Policy Preferences
 
 After RBAC and environment setup, ask the user about compliance requirements and update the `## Compliance & Azure Policy` section in `.github/copilot-instructions.md`:
 
@@ -224,9 +278,10 @@ After RBAC and environment setup, ask the user about compliance requirements and
 4. Ask for final confirmation.
 5. Execute the required Azure CLI and GitHub CLI commands directly from this playbook.
 6. Scaffold workflow files and `copilot-instructions.md` via `./scripts/scaffold-repo.sh` on macOS/Linux/WSL, or `pwsh ./scripts/scaffold-repo.ps1` on Windows (Step 9 in playbook). Report which files were created vs skipped.
-7. Ask compliance framework and enforcement mode preferences (Step 10 in playbook).
-8. Update `copilot-instructions.md` with compliance preferences — or, if the file was skipped by the scaffold step, surface the preferences in chat for manual integration.
-9. Summarize outcome (including scaffolded file counts) and suggest verification commands.
+7. *(Optional)* Offer to onboard the drift detector workflow by provisioning `COPILOT_GITHUB_TOKEN` (Step 10 in playbook). Skip if the user does not want scheduled drift detection.
+8. Ask compliance framework and enforcement mode preferences (Step 11 in playbook).
+9. Update `copilot-instructions.md` with compliance preferences — or, if the file was skipped by the scaffold step, surface the preferences in chat for manual integration.
+10. Summarize outcome (including scaffolded file counts) and suggest verification commands.
 
 ## Known Gotchas
 
@@ -287,4 +342,9 @@ gh api repos/<ORG>/<REPO> --jq '{repo_id: .id, owner_id: .owner.id}'
 
 # Validate role assignments for SP (replace principal object id)
 az role assignment list --assignee-object-id <SP_OBJECT_ID> --all -o table
+
+# (Optional, drift detector) Confirm the Copilot engine credential is set
+gh secret list --repo <ORG>/<REPO> | grep -q '^COPILOT_GITHUB_TOKEN' \
+  && echo "✅ COPILOT_GITHUB_TOKEN set" \
+  || echo "⚠️ COPILOT_GITHUB_TOKEN missing — drift workflow will fail its preflight"
 ```
