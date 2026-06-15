@@ -315,8 +315,12 @@ jobs:
           echo "    prior stack : ${{ steps.pre_state.outputs.stack_existed }}"
           START_TIME=$(date +%s)
 
-          # Enable verbose Azure CLI logging for this step
+          # Default Azure CLI output to JSON. The --verbose diagnostics below are
+          # written to stderr; capture them in a temp file so they don't get mixed
+          # into the JSON on stdout that we parse with jq (which would otherwise
+          # crash this step on an otherwise-successful deploy).
           export AZURE_CORE_OUTPUT=json
+          VERBOSE_LOG=$(mktemp)
 
           # Create/update the subscription-scope Deployment Stack.
           # --action-on-unmanage deleteAll binds the whole stack (RG + contents)
@@ -333,7 +337,7 @@ jobs:
             --tags "managedBy=git-ape" "deploymentId=$STACK_NAME" \
             --yes \
             --verbose \
-            --output json 2>&1)
+            --output json 2>"$VERBOSE_LOG")
           EXIT_CODE=$?
           set -e
 
@@ -344,15 +348,21 @@ jobs:
           echo "::endgroup::"
 
           if [[ $EXIT_CODE -ne 0 ]]; then
+            # The real error is on stderr (captured in VERBOSE_LOG); stdout
+            # (DEPLOY_OUTPUT) is usually empty on failure. Surface both.
+            VERBOSE_CONTENT=$(cat "$VERBOSE_LOG")
+            rm -f "$VERBOSE_LOG"
             echo "deploy_status=failed" >> "$GITHUB_OUTPUT"
             echo "deploy_error<<EOF" >> "$GITHUB_OUTPUT"
             echo "$DEPLOY_OUTPUT" >> "$GITHUB_OUTPUT"
+            echo "$VERBOSE_CONTENT" >> "$GITHUB_OUTPUT"
             echo "EOF" >> "$GITHUB_OUTPUT"
             echo ""
             echo "=========================================="
             echo "❌ STACK DEPLOYMENT FAILED"
             echo "=========================================="
             echo "$DEPLOY_OUTPUT"
+            echo "$VERBOSE_CONTENT"
             echo "=========================================="
 
             # Surface the underlying deployment operation errors — the stack error
@@ -372,6 +382,10 @@ jobs:
             echo "::error::Stack deployment failed — see output above for details"
             exit 1
           fi
+
+          # Success: stdout was clean JSON, so the verbose stderr log is no longer
+          # needed. Remove it before parsing the deploy output below.
+          rm -f "$VERBOSE_LOG"
 
           echo "deploy_status=succeeded" >> "$GITHUB_OUTPUT"
 
