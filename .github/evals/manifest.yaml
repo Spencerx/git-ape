@@ -27,11 +27,15 @@ skills:
   # Pilot tier: full multi-model fan-out (most-trusted skills).
   - name: prereq-check
     tier: pilot
-
+  - name: git-ape-onboarding
+    tier: pilot
   # Expanded tier: 2-model fan-out for skills still maturing toward pilot.
+  - name: azure-stack-deploy
+    tier: expanded
+  - name: azure-stack-destroy
+    tier: expanded
   - name: azure-policy-advisor
     tier: expanded
-
 # Per-tier model fan-out. The matrix runs each selected skill against every
 # model in its tier. To compare additional models, add them here.
 #
@@ -43,9 +47,9 @@ tiers:
       - name: claude-sonnet-4.6
       - name: gpt-5.4
         baseline: true
-      - name: gpt-5-codex
+      - name: gpt-5.3-codex
       - name: claude-opus-4.6
   expanded:
     models:
       - name: claude-sonnet-4.6
-      - name: gpt-5-codex
+      - name: gpt-5.3-codex
