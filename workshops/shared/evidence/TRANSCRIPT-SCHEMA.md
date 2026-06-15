@@ -31,7 +31,7 @@ Each transcript file is committed to the repo so reviewers can diff PR changes a
 
 Rules:
 
-- Every command line begins with `$ ` (dollar + space).
+- Every command line begins with `$` (dollar + space).
 - Output follows the command line immediately, no blank line.
 - Steps are level-2 headings matching the lab's step headings.
 - Sensitive values replaced with `<REDACTED-*>` tokens.

@@ -9,6 +9,7 @@
 **Headline:** PR-Based Deployments with Zero Secrets
 
 **Content (4 workflows):**
+
 1. `git-ape-plan.yml` — Validates template on PR, posts plan as comment
 2. `git-ape-deploy.yml` — Deploys on merge to main (or `/deploy` comment)
 3. `git-ape-destroy.yml` — Tears down resources when `metadata.json` → `destroy-requested`
@@ -23,6 +24,7 @@
 **Headline:** GitHub Issue → Deployed Infrastructure
 
 **Content:**
+
 1. File an issue describing what you need
 2. Copilot Coding Agent generates ARM template on a branch
 3. PR opened automatically with architecture diagram
@@ -39,6 +41,7 @@
 **Headline:** Dev → Staging → Prod with Isolation
 
 **Content:**
+
 - Separate Azure subscriptions per environment
 - Environment-specific parameter files
 - GitHub environments with protection rules
@@ -52,6 +55,7 @@
 **Headline:** CIS, NIST, and Custom Policy Assessment
 
 **Content:**
+
 - Azure Policy compliance checking before deployment
 - Frameworks: CIS Azure Foundations v3.0, NIST SP 800-53 Rev 5
 - Advisory gate (non-blocking) — surfaces findings without halting
@@ -65,6 +69,7 @@
 **Headline:** Bring Existing Resources Under Management
 
 **Content:**
+
 - Export live Azure resources to ARM templates
 - Reverse-engineer existing infrastructure
 - Bring legacy deployments under Git-Ape management
@@ -77,6 +82,7 @@
 **Headline:** Create → Deploy → Monitor → Teardown
 
 **Content:**
+
 - Complete lifecycle tracked in `.azure/deployments/`
 - State: `planning` → `deployed` → `drift-detected` → `reconciled` → `destroyed`
 - Teardown via PR: set `metadata.json` → `destroy-requested` → merge → auto-delete
@@ -102,6 +108,7 @@
 **Headline:** Open Your Development Environment and Verify Onboarding
 
 **Content:**
+
 - Ensure OIDC and GitHub environments are configured (Track 2 Lab 1)
 - Verify with `git-ape-verify.yml`
 - Start with Lab 1

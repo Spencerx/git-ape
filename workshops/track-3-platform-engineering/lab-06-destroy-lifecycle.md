@@ -88,6 +88,7 @@ gh run watch
 ```
 
 The workflow:
+
 1. Reads the resource group name from `state.json`
 2. Inventories all resources in the group
 3. Deletes subscription-scoped resources first (role assignments)

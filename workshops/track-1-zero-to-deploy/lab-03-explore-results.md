@@ -38,10 +38,12 @@ After deploy you also get `state.json` (resource IDs + stack name, used by destr
 A trustworthy finding cites the exact ARM property it verified. Look in `security-analysis.md` for entries like:
 
 ```
+
 Storage account: shared key access
   status: PASSED
   ARM property: allowSharedKeyAccess = false
   severity: critical
+
 ```
 
 The property is the evidence. If a finding lacks one, it is an assertion not a proof; flag it.## Step 4: Gate verdict

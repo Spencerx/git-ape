@@ -19,6 +19,7 @@ A live, narrated walkthrough that gives the audience their first end-to-end Git-
 ### Backup Plan
 
 If live Azure deploy fails (network, quota, Copilot downtime):
+
 - Pre-recorded screen capture of the same flow lives at `workshops/shared/recordings/track-1-demo.mp4` (record once before workshop)
 - Or skip the deploy step and walk through artefacts already generated in `.azure/deployments/<id>/`
 
@@ -61,6 +62,7 @@ The Requirements Gatherer asks 2–3 clarifying questions. Answer them out loud:
 ### [3:45] Template generation (2 minutes)
 
 The Template Generator produces:
+
 - `.azure/deployments/<id>/template.json`
 - `.azure/deployments/<id>/parameters.json`
 - `.azure/deployments/<id>/architecture.md` (with Mermaid diagram)
@@ -80,6 +82,7 @@ The Security Analyzer agent runs automatically and prints a per-resource report.
 > "🟢 SECURITY GATE: PASSED — 12 checks applied across 4 resources."
 
 **Highlight three findings** by clicking each in the chat output:
+
 - "HTTPS only: enabled — no clear-text traffic possible."
 - "Managed identity: enabled — no storage keys anywhere in the template."
 - "TLS 1.2 minimum: enforced."
@@ -113,6 +116,7 @@ Type `yes`.
 The Azure Resource Deployer runs `az stack sub create --action-on-unmanage deleteAll`.
 
 **While it runs (~2 min), narrate:**
+
 - "Resource group created."
 - "Storage account created — note the auto-generated unique suffix."
 - "App Service Plan created."
@@ -125,6 +129,7 @@ The Azure Resource Deployer runs `az stack sub create --action-on-unmanage delet
 ### [13:15] Integration tests (1 minute)
 
 The Integration Tester runs and prints results:
+
 - ✅ Function App responds on HTTPS
 - ✅ Storage account reachable via managed identity
 - ✅ Application Insights receiving telemetry

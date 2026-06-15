@@ -87,6 +87,7 @@ yes
 Watch the Resource Deployer create each resource. This takes 2-5 minutes for a multi-resource deployment.
 
 After deployment completes, the Integration Tester runs:
+
 - Web app endpoint reachable
 - HTTPS enforced
 - SQL database connection healthy
@@ -95,6 +96,7 @@ After deployment completes, the Integration Tester runs:
 ## What You Deployed
 
 A complete web application stack with:
+
 - **Zero connection strings** — all service-to-service auth uses managed identity
 - **Zero passwords** — SQL uses AAD-only authentication
 - **Zero secrets in code** — Key Vault references for any app settings that need secrets

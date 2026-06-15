@@ -150,6 +150,7 @@ The onboarding agent walks you through:
 5. **RBAC role** — choose "Contributor" (minimum for deployments)
 
 Watch as the agent:
+
 - Creates an Entra ID App Registration
 - Configures OIDC federated credentials (main branch + pull requests + environment)
 - Assigns RBAC roles on your subscription

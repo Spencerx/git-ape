@@ -17,6 +17,7 @@ A pre-scripted demo for the executive briefing. The presenter deploys a Function
 ### Backup Plan
 
 If live demo fails (network, Azure outage, Copilot downtime):
+
 - Switch to pre-recorded video of the same flow
 - Or walk through screenshots of each stage
 
@@ -68,6 +69,7 @@ Point to the security analysis output:
 > "This is the security gate. It checked 10+ security controls automatically."
 
 Read the key findings:
+>
 > - "HTTPS-only: enabled. No unencrypted traffic."
 > - "Managed identity: enabled. No passwords stored anywhere."
 > - "Shared key access: disabled. Only Azure AD tokens can access the storage."
@@ -107,7 +109,7 @@ While deploying, narrate:
 ### [9:30] Wrap Up (30 seconds)
 
 > "In under 10 minutes, we went from a sentence to deployed, tested, secured infrastructure. The security analysis, cost estimate, and architecture diagram are all saved for audit."
-
+>
 > "Imagine every engineer on your team having this capability. No tickets. No waiting. No security gaps."
 
 ---
@@ -125,6 +127,7 @@ While deploying, narrate:
 ## Pre-Recording Option
 
 To create a recorded version:
+
 1. Run the demo in your development environment with screen recording
 2. Use a clean subscription (no existing resources)
 3. Edit out any wait times longer than 5 seconds

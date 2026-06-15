@@ -80,6 +80,7 @@ User flagged service-principal coverage; audit confirmed seven more gaps:
 - Labs NOT executed against a real Azure sandbox (no Azure session).
 - Lab content NOT reviewed by a second human reader (single-author).
 - Specific commands NOT validated end-to-end (e.g., azure-mcp invocations, agent prompts).
+
 ## Phase C and D summary
 
 Phase C ships transcript capture infrastructure (TRANSCRIPT-SCHEMA.md, redact-evidence.js, capture-lab-evidence.sh, _extract-capture-cmds.py, verify-lab-evidence.sh, screenshots/README.md).
@@ -104,6 +105,7 @@ Not verified in either phase: end-to-end execution against real Azure or real PR
 ## Verified vs needs dry-run
 
 Verified now (no Azure needed):
+
 - All scripts pass syntax checks (bash -n, ast.parse).
 - redact-evidence.js correctly redacts UUID and email.
 - Workshop-quality-check workflow YAML parses.
@@ -111,6 +113,7 @@ Verified now (no Azure needed):
 - All lab content within per-track timing budget.
 
 Needs facilitator dry-run before customer delivery (CUSTOMER-READINESS-CHECKLIST.md item 1):
+
 - All Azure CLI commands in labs behave as documented.
 - Per-track prereq scripts return PASS on the actual sandbox.
 - Lab transcripts can be captured and committed.

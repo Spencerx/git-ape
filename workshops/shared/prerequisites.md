@@ -155,9 +155,11 @@ The "Allow GH Actions to create and approve pull requests" setting is **OFF by d
 These are usually fine but worth checking with your org admin:
 
 - **OIDC subject template** — some orgs (e.g., the Azure org) customize the OIDC subject format. Onboarding auto-detects via:
+
   ```bash
   gh api orgs/<org>/actions/oidc/customization/sub --jq '.use_default'
   ```
+
   If `false`, onboarding uses the numeric-ID-based subject format instead of `repo:org/repo`. If it gets this wrong, deploys fail at runtime with `AADSTS700213: No matching federated identity record`.
 - **Copilot Coding Agent enabled** (T3 Lab 2 only) — Settings → Code & automation → Copilot coding agent.
 - **GitHub Actions enabled** for the repo at org level.

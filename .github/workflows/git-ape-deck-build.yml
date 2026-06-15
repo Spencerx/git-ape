@@ -60,10 +60,12 @@ jobs:
           # Manual dispatch: trust the operator-supplied filter.
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             ONLY="${{ github.event.inputs.only }}"
-            echo "only=${ONLY}" >> "$GITHUB_OUTPUT"
-            echo "rebuild_all=$([[ -z "$ONLY" ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-            echo "reason=manual workflow_dispatch" >> "$GITHUB_OUTPUT"
+            {
+              echo "only=${ONLY}"
+              echo "rebuild_all=$([[ -z "$ONLY" ]] && echo true || echo false)"
+              echo "skip=false"
+              echo "reason=manual workflow_dispatch"
+            } >> "$GITHUB_OUTPUT"
             echo "✅ Manual dispatch, only=${ONLY:-<all>}"
             exit 0
           fi
@@ -152,9 +154,9 @@ jobs:
             echo "skip=false" >> "$GITHUB_OUTPUT"
             echo "✅ Will rebuild: ${ONLY:-all tracks}"
           fi
-          echo "only=${ONLY}" >> "$GITHUB_OUTPUT"
-          echo "rebuild_all=${REBUILD_ALL}" >> "$GITHUB_OUTPUT"
           {
+            echo "only=${ONLY}"
+            echo "rebuild_all=${REBUILD_ALL}"
             echo "reason<<EOF"
             printf '%s\n' "${REASONS[@]}"
             echo "EOF"

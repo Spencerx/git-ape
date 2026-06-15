@@ -53,16 +53,19 @@ gh run list --branch deploy/workshop-funcapp
 After it completes, check the PR for a comment. The plan comment includes:
 
 ### Validation Result
+
 ```
 ✅ Template validation: PASSED
 ```
 
 ### Security Findings
+
 ```
 🟢 No security issues found (0 errors, 0 warnings)
 ```
 
 ### Cost Estimate
+
 ```
 Estimated monthly cost: $3.20
 - Function App (Consumption): $0.00
@@ -71,9 +74,11 @@ Estimated monthly cost: $3.20
 ```
 
 ### Architecture Diagram
+
 The Mermaid diagram from `architecture.md` rendered in the PR comment.
 
 ### What-If Analysis
+
 ```
 Resources to CREATE:
   + Microsoft.Resources/resourceGroups — rg-cicddemo-dev-eastus
@@ -101,6 +106,7 @@ gh run watch
 ```
 
 After deployment:
+
 - Integration tests run automatically
 - `state.json` is committed to the repo with deployment results
 - A deployment result comment is posted on the (now merged) PR
@@ -130,6 +136,7 @@ Should show `"deployed"`.
 ## What You Built
 
 A complete CI/CD pipeline:
+
 1. **PR opens** → template validated, security scanned, cost estimated, plan posted
 2. **PR approved + merged** → deployment executed, tests run, state committed
 3. **Zero manual steps** — everything triggered by git events
@@ -140,6 +147,7 @@ A complete CI/CD pipeline:
 ## Step 7: The PR-comment contract
 
 Plan posts ONE canonical comment with four sections:
+
 1. Validation result
 2. What-if analysis
 3. Architecture diagram (Mermaid)

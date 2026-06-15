@@ -9,6 +9,7 @@
 **Headline:** Cloud Deployment Is Your Biggest Bottleneck
 
 **Content:**
+
 - 73% of engineering teams wait days for infrastructure changes (internal survey proxy)
 - Shadow IT: developers create resources through the portal without governance
 - Security incidents from misconfigured cloud resources cost an average of $4.35M per breach (IBM Cost of a Data Breach 2023)
@@ -29,6 +30,7 @@ Show the input and output:
 > "Deploy a web app with SQL database for the inventory app in production"
 
 **Output (in 2 minutes):**
+
 - Complete infrastructure template (7 resources)
 - Security analysis: PASSED (12 checks)
 - Cost estimate: $92/month
@@ -44,6 +46,7 @@ Show the input and output:
 **Headline:** Security Is Not Optional — It's Enforced
 
 **Content:**
+
 - **Blocking security gate** — deployment physically stops if Critical/High issues exist
 - Managed identities everywhere — no passwords, no connection strings, no shared keys
 - HTTPS-only, TLS 1.2+, FTP disabled
@@ -60,6 +63,7 @@ Show the input and output:
 **Headline:** Know What You Pay Before You Deploy
 
 **Content:**
+
 - Real-time cost estimates using the Azure Retail Prices API
 - Per-resource monthly breakdown
 - Dev vs production SKU comparison
@@ -74,6 +78,7 @@ Show the input and output:
 **Headline:** CIS, NIST, and Custom Policy Assessment — Automated
 
 **Content:**
+
 - Templates assessed against CIS Azure Foundations v3.0 and NIST SP 800-53
 - Per-resource compliance score
 - Audit trail of every deployment decision
@@ -90,6 +95,7 @@ Show the input and output:
 
 **Content:**
 The AI Principal Architect evaluates every deployment across 5 pillars:
+
 1. **Security** — identity, encryption, access control
 2. **Reliability** — redundancy, health monitoring, backup
 3. **Performance** — right-sizing, auto-scaling
@@ -105,6 +111,7 @@ The AI Principal Architect evaluates every deployment across 5 pillars:
 **Headline:** Your Engineers Deploy. Your Standards Are Enforced.
 
 **Content:**
+
 - Engineers describe what they need in plain English
 - Git-Ape enforces your organization's security baseline automatically
 - CAF-compliant naming — no inconsistent resource names
@@ -135,6 +142,7 @@ The AI Principal Architect evaluates every deployment across 5 pillars:
 **Headline:** Free, Open, Community-Driven
 
 **Content:**
+
 - Apache 2.0 licensed — use, modify, contribute
 - Built on GitHub Copilot and Azure
 - Growing community of contributors
@@ -148,11 +156,13 @@ The AI Principal Architect evaluates every deployment across 5 pillars:
 **Headline:** Try It Today
 
 **Content:**
+
 1. Set up your environment — Codespaces (no install), Dev Containers, or local VS Code
 2. Type one sentence to `@git-ape`
 3. See the result in 2 minutes
 
 **For your organization:**
+
 - Schedule an internal workshop (30 minutes)
 - Assess fit for your team's deployment workflow
 - Contact us for sandbox subscription setup

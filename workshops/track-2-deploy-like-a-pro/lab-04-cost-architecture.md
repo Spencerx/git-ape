@@ -58,26 +58,31 @@ In Copilot Chat:
 The Principal Architect evaluates your deployment against the Well-Architected Framework's 5 pillars:
 
 **1. Security**
+
 - Managed identity chain (Web App → Key Vault → SQL)
 - AAD-only SQL authentication
 - HTTPS-only with TLS 1.2
 
 **2. Reliability**
+
 - Single region deployment (acceptable for dev)
 - No redundancy configured (expected for B1 tier)
 - Application Insights for health monitoring
 
 **3. Performance Efficiency**
+
 - B1 App Service plan (1 core, 1.75 GB RAM)
 - Basic SQL (5 DTU)
 - Adequate for dev workloads
 
 **4. Cost Optimization**
+
 - Dev-appropriate SKUs selected
 - Consumption-based monitoring
 - No over-provisioning detected
 
 **5. Operational Excellence**
+
 - Application Insights configured
 - Deployment managed through IaC
 - Audit trail maintained
@@ -85,6 +90,7 @@ The Principal Architect evaluates your deployment against the Well-Architected F
 ### Step 6: Understand Trade-offs
 
 The architect may note:
+
 - "For production, consider Standard tier with auto-scaling"
 - "Add a secondary region for disaster recovery"
 - "Enable diagnostic logs on SQL Server"

@@ -13,6 +13,7 @@ Set up dev and staging environments with separate parameter files and promote a 
 ## Step 1: Understand the Environment Structure
 
 Git-Ape supports multi-environment deployments with:
+
 - **Separate Azure subscriptions** (or resource groups) per environment
 - **Environment-specific parameter files** that override defaults
 - **GitHub environments** with protection rules
@@ -124,6 +125,7 @@ After dev succeeds, promote to staging by pointing at the staging parameter file
 ```
 
 Notice the differences:
+
 - Resource names change: `rg-...-dev-...` → `rg-...-staging-...`
 - SKUs upgrade: B1 → S1, Basic → S0
 - Cost estimate increases with higher tiers
@@ -169,6 +171,7 @@ Git-Ape selects the file based on environment label in PR title or metadata.json
 ## Step 7: Promotion verification
 
 Before promoting to staging:
+
 - Plan-comment checks PASSED.
 - Cost delta is expected.
 - Integration tests passed in dev (tests.json).

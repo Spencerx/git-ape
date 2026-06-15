@@ -11,6 +11,7 @@ Use this outline to create the PowerPoint or Google Slides deck for Track 1.
 **Headline:** Deploy Azure Infrastructure with a Sentence
 
 **Content:**
+
 - Git-Ape is an AI assistant that turns plain English into production-ready cloud infrastructure
 - Built on GitHub Copilot — works right in your editor or browser
 - Handles security, cost estimation, and architecture documentation automatically
@@ -31,6 +32,7 @@ Use this outline to create the PowerPoint or Google Slides deck for Track 1.
 **Headline:** A Conversation, Not a Configuration File
 
 **Content (4-step flow):**
+
 1. **You describe** what you need in plain English
 2. **Git-Ape asks** a few clarifying questions (region, environment, project name)
 3. **Git-Ape generates** the infrastructure template, security report, and cost estimate
@@ -47,6 +49,7 @@ Use this outline to create the PowerPoint or Google Slides deck for Track 1.
 **Headline:** A Python Function App on Azure
 
 **Content:**
+
 - Serverless function app (runs code without managing servers)
 - Storage account (file storage)
 - Application Insights (monitoring)
@@ -69,6 +72,7 @@ Function App ──→ Storage Account
 **Headline:** Set Up Your Environment
 
 **Content:**
+
 - Choose your setup: Codespaces (browser), Dev Containers (local Docker), or VS Code local
 - Container-based options include all tools pre-installed — nothing to download
 - Follow along with the lab guide
@@ -84,12 +88,14 @@ Function App ──→ Storage Account
 **Headline:** What You Just Did
 
 **Content:**
+
 - Deployed Azure infrastructure using one sentence
 - Got an automatic security review (with a blocking gate)
 - Saw a cost estimate using real Azure pricing
 - Generated an architecture diagram
 
 **Next steps:**
+
 - Track 2: Deploy multi-resource architectures with security deep dives (60 min)
 - Track 3: CI/CD pipelines, headless mode, policy compliance (90 min)
 - Explore the [Git-Ape documentation](https://github.com/Azure/git-ape)

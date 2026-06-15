@@ -23,6 +23,7 @@ Detect multi-type drift across a deployed architecture, triage by severity, appl
 - Copilot Chat available
 
 > **No deployment from Lab 2?** Deploy a quick baseline:
+>
 > ```text
 > Deploy a storage account and a web app in resource group rg-driftlab-dev-eastus. Use Container Apps hosting. Project name: driftlab, environment: dev.
 > ```
@@ -147,6 +148,7 @@ Revert the HTTPS drift — redeploy with supportsHttpsTrafficOnly: true
 The detector runs the revert script, which redeploys the template to restore the original security posture.
 
 Verify:
+
 ```bash
 az storage account show --name "$STORAGE_NAME" \
   --query "supportsHttpsTrafficOnly" -o tsv
@@ -182,6 +184,7 @@ Re-run the detector:
 ```
 
 Expected result:
+
 ```
 ✅ Drift Status: Mostly Clean
 
@@ -210,6 +213,7 @@ cat .github/workflows/git-ape-drift.md
 ```
 
 Key features of the workflow:
+
 - **Runs daily at 06:00 UTC** via `schedule` trigger
 - **OIDC authentication** — no stored credentials
 - **Snapshots all deployments** — captures current Azure state before analysis
@@ -228,6 +232,7 @@ cat .github/skills/azure-drift-detector/scripts/drift-check-all.sh
 ```
 
 The `drift-check-all.sh` script:
+
 1. Discovers all deployment directories in `.azure/deployments/`
 2. Runs drift detection on each
 3. Aggregates results into a fleet-wide drift report

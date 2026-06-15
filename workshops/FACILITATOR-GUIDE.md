@@ -40,6 +40,7 @@
 | 0:28-0:30 | Wrap-up | Recap, point to Track 2, collect feedback |
 
 **Pacing tips:**
+
 - Lab 2 is the core. If running short on time, abbreviate Lab 3.
 - Pause after the security gate output — this is the "wow moment" for beginners.
 - If the environment is slow to build, fill time by showing the architecture diagram on your screen.
@@ -56,6 +57,7 @@
 | 0:55-0:60 | Lab 5: Drift + Wrap-up | Quick drift demo, then recap and feedback. |
 
 **Pacing tips:**
+
 - Lab 3 is the highlight. Spend extra time here if needed.
 - If Lab 1 takes too long (OIDC setup issues), skip Lab 5 and focus on Labs 2-4.
 - Have a pre-onboarded repo as backup if OIDC setup fails.
@@ -73,6 +75,7 @@
 | 1:25-1:30 | Lab 6: Destroy + Wrap-up | Teardown lifecycle, final recap. |
 
 **Pacing tips:**
+
 - Labs 1-2 are the core value for this audience. Protect their time.
 - Lab 4 can be shortened to a demo if running behind.
 - Labs 5-6 can be combined into a 10-minute demo if time is tight.
@@ -85,6 +88,7 @@
 | 0:10-0:20 | Guided Demo | Follow the demo script. Emphasize security gate and cost estimate. |
 
 **Pacing tips:**
+
 - This audience wants outcomes, not technical details.
 - Keep the demo smooth. Practice 2-3 times beforehand.
 - Have the pre-recorded video ready as backup.

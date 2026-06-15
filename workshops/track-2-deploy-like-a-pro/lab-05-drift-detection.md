@@ -7,6 +7,7 @@ Introduce a manual change in Azure, detect it as drift, and choose a reconciliat
 ## What Is Drift?
 
 **Drift** happens when the actual Azure configuration differs from what's defined in your IaC templates. Common causes:
+
 - Manual changes in the Azure Portal
 - Azure Policy remediations
 - Automated scripts or unauthorized modifications
@@ -16,6 +17,7 @@ Introduce a manual change in Azure, detect it as drift, and choose a reconciliat
 Go to the Azure Portal or use the CLI to make a change that wasn't in your template.
 
 **Option A: Azure Portal**
+
 1. Navigate to your storage account (`sthelloworlddev...` or similar)
 2. Go to **Networking** > **Firewalls and virtual networks**
 3. Change "Public network access" from "Enabled" to "Enabled from selected virtual networks and IP addresses"
@@ -108,6 +110,7 @@ Run the drift detector again:
 ```bash
 az group delete --name rg-inventoryapp-dev-eastus --yes --no-wait
 ```
+
 ## Step 6: Drift severity
 
 - Critical: security regression. REVERT IMMEDIATELY.

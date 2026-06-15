@@ -25,6 +25,7 @@ Note the issue number returned.
 ## Step 2: Watch the Coding Agent (If Enabled)
 
 The Copilot Coding Agent:
+
 1. Reads the issue body
 2. Creates a feature branch
 3. Generates ARM template, architecture diagram, requirements, metadata
@@ -46,6 +47,7 @@ gh pr view <PR_NUMBER> --web
 ```
 
 The PR contains:
+
 - ARM template with Container App, Container Registry, Log Analytics
 - Architecture diagram
 - Requirements captured from the issue body

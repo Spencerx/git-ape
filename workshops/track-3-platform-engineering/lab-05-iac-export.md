@@ -41,11 +41,13 @@ Replace the resource group name with your actual group.
 ## Step 3: Review the Exported Template
 
 The exporter generates:
+
 - ARM template with all resource definitions
 - Parameter file with current configuration values
 - Resource relationship mapping
 
 Compare the exported template with the original:
+
 - Resource types and API versions
 - Properties and configurations
 - Dependencies between resources
@@ -59,6 +61,7 @@ The exported files can be saved to `.azure/deployments/` to bring them under Git
 ```
 
 This creates:
+
 - `metadata.json` with status `imported`
 - `state.json` with current resource IDs
 - `requirements.json` reverse-engineered from the template
@@ -87,6 +90,7 @@ Any manual changes since export will show as drift.
 ## Step 6: Use cases
 
 IaC Exporter helps when:
+
 - You inherited an undocumented Azure RG and need an ARM template.
 - You need to bring existing resources under Git-Ape management.
 - You want a starting point for a similar deployment elsewhere.

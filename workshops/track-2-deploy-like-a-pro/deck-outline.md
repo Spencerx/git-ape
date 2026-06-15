@@ -9,6 +9,7 @@
 **Headline:** 8 Agents, 33 Skills, 4 Workflows
 
 **Content:**
+
 - Orchestrator agent (`@git-ape`) coordinates the full pipeline
 - Specialized sub-agents: Requirements Gatherer, Template Generator, Resource Deployer
 - Advisory agents: Principal Architect (WAF), Policy Advisor (CIS/NIST)
@@ -24,6 +25,7 @@
 **Headline:** Deployment Stops If Security Fails
 
 **Content:**
+
 - **Blocking security gate** — Critical/High findings prevent deployment
 - Managed identities everywhere (no connection strings, no shared keys)
 - HTTPS-only, TLS 1.2+, FTP disabled, AAD-only SQL auth
@@ -39,6 +41,7 @@
 **Headline:** Every Resource Named Correctly, Automatically
 
 **Content:**
+
 - Cloud Adoption Framework (CAF) naming enforced
 - Pattern: `{type}-{project}-{env}-{region}`
 - Examples: `func-orderapi-dev-eastus`, `kv-orderapi-prod-eus`
@@ -52,6 +55,7 @@
 **Headline:** See What You Pay Before You Deploy
 
 **Content:**
+
 - Azure Retail Prices API (real pricing, not estimates)
 - Per-resource monthly cost breakdown
 - Compare dev vs prod SKU costs
@@ -64,6 +68,7 @@
 **Headline:** Web App + SQL Database + Key Vault
 
 **Content (architecture):**
+
 - App Service Plan + Web App (managed identity)
 - SQL Server + SQL Database (AAD-only auth)
 - Key Vault (secrets management)
@@ -89,6 +94,7 @@
 **Headline:** What Happens When You Break Security?
 
 **Content:**
+
 1. You enable shared key access on a storage account (a security anti-pattern)
 2. Git-Ape's security analyzer catches it: `🔴 SECURITY GATE: BLOCKED`
 3. Deployment is prevented until you fix it
@@ -103,6 +109,7 @@
 **Headline:** Open Your Development Environment and Sign In to Azure
 
 **Content:**
+
 1. Set up your environment ([environment setup guide](../shared/environment-setup.md))
 2. Run `az login` (or `az login --use-device-code` in Codespaces)
 3. Start with Lab 1

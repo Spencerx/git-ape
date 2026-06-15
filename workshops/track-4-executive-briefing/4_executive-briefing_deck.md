@@ -518,6 +518,7 @@ style: |
 <div class="eyebrow">Git-Ape Executive Briefing</div>
 
 # Deploy Azure Infrastructure
+
 ## With a Single Sentence
 
 ### Git-Ape for Engineering Leaders
@@ -710,8 +711,10 @@ typical monthly range for Function App + Storage + Monitoring
 </div>
 <div>
 
-4. **Cost** — waste reduction and tier fit
-5. **Operational excellence** — IaC, observability, runbooks
+<ol start="4">
+<li><strong>Cost</strong> — waste reduction and tier fit</li>
+<li><strong>Operational excellence</strong> — IaC, observability, runbooks</li>
+</ol>
 
 </div>
 </div>

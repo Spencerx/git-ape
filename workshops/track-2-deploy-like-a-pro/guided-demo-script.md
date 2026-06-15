@@ -19,6 +19,7 @@ The Track 2 demo extends Track 1's "first deploy" experience to a real multi-res
 ### Backup Plan
 
 If live deploy fails:
+
 - Pre-recorded video at `workshops/shared/recordings/track-2-demo.mp4`
 - Or use a pre-deployed sandbox stack and walk through its `state.json`, `security-assessment.md`, and `cost-estimate.md`
 
@@ -55,6 +56,7 @@ Walk through the agent's clarifying questions:
 | AAD-only auth on SQL? | `yes` | "This is the key decision — no SQL logins allowed." |
 
 Open the generated `architecture.md`. The Mermaid diagram shows:
+
 - App Service Plan → Web App
 - Web App → Key Vault (managed identity, Get/List secrets)
 - Web App → SQL Server (AAD-only, identity-based)
@@ -68,6 +70,7 @@ Open the generated `architecture.md`. The Mermaid diagram shows:
 The Security Analyzer prints the per-resource report.
 
 Scroll through and read three callouts:
+
 - "AAD-only auth on SQL: ✅ Applied (azureADOnlyAuthentication = true)"
 - "Shared key access on storage: ✅ Applied (allowSharedKeyAccess = false)"
 - "Key Vault soft-delete: ✅ Applied"
@@ -93,6 +96,7 @@ In Copilot Chat:
 ```
 
 **Watch the output change:**
+
 - "❌ SQL AAD-only authentication: NOT APPLIED — Critical severity"
 - "🔴 SECURITY GATE: BLOCKED"
 
@@ -118,6 +122,7 @@ Gate is back to 🟢 PASSED.
 ### [9:45] Cost estimate (1 minute)
 
 Show the cost breakdown:
+
 - Web App (Basic B1): ~$13/month
 - SQL Database (Basic): ~$5/month
 - Key Vault: ~$0.03/secret/month
@@ -131,6 +136,7 @@ Show the cost breakdown:
 Type `yes`. The deployment runs as a Deployment Stack.
 
 **Narrate during the ~3-minute deploy:**
+
 - "Stack created — this is the unit of lifecycle."
 - "SQL server with AAD admin assigned."
 - "Database provisioned at Basic tier."
@@ -140,6 +146,7 @@ Type `yes`. The deployment runs as a Deployment Stack.
 ### [14:45] Integration tests (2 minutes)
 
 The tester runs:
+
 - ✅ Web App responds on HTTPS (302 → login redirect, expected)
 - ✅ Managed identity can read Key Vault test secret
 - ✅ Managed identity authenticates to SQL (queries `SELECT @@VERSION`)
@@ -151,6 +158,7 @@ The tester runs:
 ### [16:45] State and the GitHub flow (2 minutes)
 
 Open the GitHub repo PR tab. Show:
+
 - `.azure/deployments/<id>/state.json` — committed by the deploy workflow
 - The PR comment posted by `git-ape-deploy.yml` confirming the deployment
 - The deployment stack visible in Azure portal

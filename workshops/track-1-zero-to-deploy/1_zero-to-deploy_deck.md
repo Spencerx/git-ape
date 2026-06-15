@@ -520,6 +520,7 @@ style: |
 <div class="eyebrow">Git-Ape - Track 1 - Zero to Deploy</div>
 
 # Deploy Azure Infrastructure
+
 ## With a Single Sentence
 
 ### A 30-minute hands-on intro for enterprise teams
