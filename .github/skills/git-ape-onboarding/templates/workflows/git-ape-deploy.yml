@@ -259,9 +259,11 @@ jobs:
           # Default Azure CLI output to JSON. The --verbose diagnostics below are
           # written to stderr; capture them in a temp file so they don't get mixed
           # into the JSON on stdout that we parse with jq (which would otherwise
-          # crash this step on an otherwise-successful deploy).
+          # crash this step on an otherwise-successful deploy). The trap guarantees
+          # the temp file is removed when the step exits, however it ends.
           export AZURE_CORE_OUTPUT=json
           VERBOSE_LOG=$(mktemp)
+          trap 'rm -f "$VERBOSE_LOG"' EXIT
 
           # Create/update the subscription-scope Deployment Stack.
           # --action-on-unmanage deleteAll binds the whole stack (RG + contents)
@@ -292,7 +294,6 @@ jobs:
             # The real error is on stderr (captured in VERBOSE_LOG); stdout
             # (DEPLOY_OUTPUT) is usually empty on failure. Surface both.
             VERBOSE_CONTENT=$(cat "$VERBOSE_LOG")
-            rm -f "$VERBOSE_LOG"
             echo "deploy_status=failed" >> "$GITHUB_OUTPUT"
             echo "deploy_error<<EOF" >> "$GITHUB_OUTPUT"
             echo "$DEPLOY_OUTPUT" >> "$GITHUB_OUTPUT"
@@ -323,10 +324,6 @@ jobs:
             echo "::error::Stack deployment failed — see output above for details"
             exit 1
           fi
-
-          # Success: stdout was clean JSON, so the verbose stderr log is no longer
-          # needed. Remove it before parsing the deploy output below.
-          rm -f "$VERBOSE_LOG"
 
           echo "deploy_status=succeeded" >> "$GITHUB_OUTPUT"
 
