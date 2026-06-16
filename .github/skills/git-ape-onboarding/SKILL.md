@@ -1,6 +1,6 @@
 ---
 name: git-ape-onboarding
-description: "Onboard a repository, Azure subscription(s), and user identity for Git-Ape CI/CD using a skill-driven CLI playbook. Use for first-time setup of OIDC, federated credentials, RBAC, GitHub environments, and required secrets."
+description: "Bootstrap a GitHub repository for Git-Ape CI/CD: Entra app registration, OIDC federated credentials, RBAC role assignments, GitHub environments (azure-deploy/azure-destroy), required secrets, and scaffold Actions workflow files. USE FOR: first-time Git-Ape setup, new subscription onboarding, multi-environment (dev/staging/prod) setup, configure OIDC, federated credentials, RBAC setup, GitHub environments, scaffold workflow files. DO NOT USE FOR: deploying resources (use git-ape), drift detection alone, secret rotation."
 metadata:
   argument-hint: "GitHub repo URL, subscription target(s), and onboarding mode (single or multi-environment)"
   user-invocable: true
@@ -18,6 +18,8 @@ This skill is the source of truth for onboarding behavior. Do not depend on a st
 - New subscription onboarding (single environment)
 - Multi-environment onboarding (dev/staging/prod across different subscriptions)
 - New user handoff where OIDC, RBAC, and GitHub environments must be created
+
+**DO NOT USE FOR:** re-deploying an already-onboarded repo (use `git-ape`), rotating or updating an existing secret or federated credential, drift detection setup alone (that is an optional sub-step covered by Step 10), or general Azure resource deployment.
 
 ## What It Configures
 
@@ -252,11 +254,14 @@ After RBAC and environment setup, ask the user about compliance requirements and
 7. Never run `git add`, `git commit`, `git push`, or open a PR for the
    scaffolded files — leave them unstaged so the user decides how to land
    them.
+8. **Idempotency on re-run:** If the skill is re-invoked after a partial failure, re-run from the last failing step — not from scratch. The Entra app, federated credentials, role assignments, and GitHub environments created before the failure are safe to reuse; do not create duplicates. Surface each already-provisioned resource as `⊝ Already exists` rather than re-creating it.
 
 ## Suggested Agent Flow
 
-1. **Run `/prereq-check`** to validate tools and auth. Stop if it doesn't report ✅ READY.
-2. Confirm target repo URL, onboarding mode, and role model.
+**First-turn rule:** the very first response to any onboarding request must be a **gated handoff** — surface prereq results and collect required inputs. It must NOT be a walkthrough, a full set of CLI commands, or a completion report. The agent must not narrate or execute onboarding steps until: (a) prereq check confirms ✅ READY, and (b) all five required inputs from step 2 are in hand.
+
+1. **Run `/prereq-check`** to validate tools and auth. Surface the full results table — tool versions, Azure CLI auth status, GitHub CLI auth status, and a ✅/❌ per check. If CLI commands cannot execute in the current environment, present the required checklist items and ask the user to confirm each one passes manually (`az` ≥ 2.50 installed and authenticated, `gh` ≥ 2.0 installed and authenticated, `jq` ≥ 1.6, `git` installed). **Never advance to step 2 until prereq results are confirmed — this is a hard gate.**
+2. **Collect the required inputs.** Ask for — and wait for answers to — at minimum: (1) target GitHub repository URL, (2) Azure subscription ID (or one per environment for multi-env), (3) RBAC role to grant (`Contributor` or `Owner`), (4) onboarding mode (`single` or `multi-environment`), (5) default branch (confirm `main` or ask if non-standard). Do not proceed to step 3 without all five.
 3. Validate current Azure/GitHub auth context (subscription, tenant, GitHub org).
 4. Ask for final confirmation.
 5. Execute the required Azure CLI and GitHub CLI commands directly from this playbook.
