@@ -62,6 +62,10 @@ jobs:
           cat "$OUT"
 
       - name: Post advisory comment
+        # Fork PRs run with a read-only GITHUB_TOKEN, so issues.createComment
+        # returns 403. This advisory must never turn a community contributor's
+        # check red — keep it strictly non-blocking.
+        continue-on-error: true
         uses: actions/github-script@v9
         with:
           script: |

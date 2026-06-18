@@ -18,6 +18,9 @@ gray()   { printf "\033[90m%s\033[0m\n" "$*"; }
 
 check() {
   local label="$1"; local cmd="$2"; local fix="${3:-}"
+  # NOTE: $cmd is always an in-script static literal at the call sites below
+  # (never user/argument input), so `eval` carries no injection risk here.
+  # Do not pass externally-derived strings as the command argument.
   if eval "$cmd" >/dev/null 2>&1; then
     green "PASS $label"; PASS=$((PASS+1))
   else
@@ -29,6 +32,7 @@ check() {
 
 warn_check() {
   local label="$1"; local cmd="$2"; local advice="${3:-}"
+  # Same invariant as check(): $cmd is always an in-script static literal.
   if eval "$cmd" >/dev/null 2>&1; then
     green "PASS $label"; PASS=$((PASS+1))
   else

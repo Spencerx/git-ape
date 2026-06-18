@@ -10,6 +10,9 @@ red()   { printf "\033[31m%s\033[0m\n" "$*"; }
 gray()  { printf "\033[90m%s\033[0m\n" "$*"; }
 
 check() {
+  # NOTE: $2 is a check command, always an in-script static literal below
+  # (never user/argument input), so `eval` carries no injection risk here.
+  # Do not pass externally-derived strings as $2.
   if eval "$2" >/dev/null 2>&1; then
     green "PASS $1"; PASS=$((PASS+1))
   else

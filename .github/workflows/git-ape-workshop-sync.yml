@@ -26,15 +26,31 @@ jobs:
 
       - name: Detect changed feature files
         id: changes
+        env:
+          # Use the push-event range so multi-commit pushes (and non-squash
+          # merges) are fully covered. github.event.before is all-zeros on the
+          # first push to a branch; fall back to HEAD~1 then. Mirrors
+          # git-ape-deck-build.yml.
+          BEFORE_SHA: ${{ github.event.before }}
+          AFTER_SHA: ${{ github.sha }}
         run: |
-          CHANGED=$(git diff HEAD~1 --name-only -- \
-            '.github/agents/' \
-            '.github/skills/' \
-            '.github/workflows/git-ape-plan.yml' \
-            '.github/workflows/git-ape-deploy.yml' \
-            '.github/workflows/git-ape-destroy.yml' \
-            '.github/workflows/git-ape-verify.yml' \
+          if [[ -z "$BEFORE_SHA" || "$BEFORE_SHA" =~ ^0+$ ]]; then
+            DIFF_RANGE="HEAD~1..HEAD"
+          else
+            git fetch origin "$BEFORE_SHA" --depth=1 2>/dev/null || true
+            DIFF_RANGE="${BEFORE_SHA}..${AFTER_SHA}"
+          fi
+
+          PATHS=(
+            '.github/agents/'
+            '.github/skills/'
+            '.github/workflows/git-ape-plan.yml'
+            '.github/workflows/git-ape-deploy.yml'
+            '.github/workflows/git-ape-destroy.yml'
+            '.github/workflows/git-ape-verify.yml'
           )
+          CHANGED=$(git diff --name-only "$DIFF_RANGE" -- "${PATHS[@]}" 2>/dev/null \
+            || git diff --name-only HEAD~1 -- "${PATHS[@]}")
 
           if [[ -z "$CHANGED" ]]; then
             echo "skip=true" >> "$GITHUB_OUTPUT"

@@ -33,7 +33,9 @@ const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 const WORKSHOPS_DIR = path.join(ROOT, 'workshops');
-const MARP_VERSION = '@marp-team/marp-cli@^4.4.0';
+// Pinned to an exact version (not a caret range) so deck renders are
+// reproducible — a Marp minor/patch release cannot silently change output.
+const MARP_VERSION = '@marp-team/marp-cli@4.4.0';
 
 // ---------------------------------------------------------------------------
 // CLI argument parsing

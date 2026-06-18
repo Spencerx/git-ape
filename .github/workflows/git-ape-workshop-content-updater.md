@@ -151,9 +151,12 @@ tools:
     - "git status *"
     - "git ls-files *"
   github:
-    # Private repo, so lockdown has no effect. Read issues/PRs to find open
-    # workshop-sync issues and avoid opening duplicate content PRs.
-    lockdown: false
+    # Public repo: keep lockdown ON (the safe default). It sanitizes the
+    # untrusted issue/PR content this agent reads (issues/pull_requests
+    # toolsets), closing the cross-prompt-injection (XPIA) surface. Reading
+    # issues/PRs lets the agent find open workshop-sync issues and avoid
+    # opening duplicate content PRs.
+    lockdown: true
     toolsets: [issues, pull_requests]
   cache-memory:
     description: "Workshop coverage state — remembers prior assessments and the last-seen feature set to keep weekly runs idempotent and avoid re-proposing already-open work."

@@ -34,7 +34,6 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
-const WORKSHOPS_DIR = path.join(ROOT, 'workshops');
 const SCREENSHOT_DIR = path.join(ROOT, '.deck-screenshots');
 const PDF_DENSITY = 110;
 
