@@ -42,7 +42,7 @@ jobs:
 
     steps:
       - name: Checkout main
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 2
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -227,7 +227,7 @@ jobs:
 
       - name: Upload screenshots as artifact
         if: steps.affected.outputs.skip != 'true' && steps.diff.outputs.changed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: workshop-deck-screenshots-${{ github.run_id }}
           path: .deck-screenshots/
