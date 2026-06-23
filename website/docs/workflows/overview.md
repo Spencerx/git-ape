@@ -36,7 +36,7 @@ The user-facing workflows below are **shipped as templates** under `.github/skil
 | [Git-Ape: Workshop Deck Build](./git-ape-deck-build) | `.github/workflows/git-ape-deck-build.yml` | push, workflow_dispatch | build |
 | [Git-Ape: Docs Check](./git-ape-docs-check) | `.github/workflows/git-ape-docs-check.yml` | pull_request | check-docs |
 | [Git-Ape: Docs Deploy](./git-ape-docs) | `.github/workflows/git-ape-docs.yml` | push | build, deploy |
-| [Git-Ape: Onboarding Template Check](./git-ape-onboarding-template-check) | `.github/workflows/git-ape-onboarding-template-check.yml` | pull_request, workflow_dispatch | check-sync-bash, check-sync-pwsh, scaffold-parity-smoke |
+| [Git-Ape: Onboarding Template Check](./git-ape-onboarding-template-check) | `.github/workflows/git-ape-onboarding-template-check.yml` | pull_request, workflow_dispatch | check-sync-bash, check-sync-pwsh, scaffold-parity-smoke, scaffold-enterprise-parity-smoke |
 | [Git-Ape: Plugin Version Check](./git-ape-plugin-version-check) | `.github/workflows/git-ape-plugin-version-check.yml` | pull_request | check-version-drift |
 | [Git-Ape: Plugin Release](./git-ape-release) | `.github/workflows/git-ape-release.yml` | push, workflow_dispatch | release |
 | [Git-Ape: Script Lint](./git-ape-script-lint) | `.github/workflows/git-ape-script-lint.yml` | pull_request, workflow_dispatch | shell-lint, pwsh-lint |
