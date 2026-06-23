@@ -190,7 +190,7 @@ The dev container comes with everything pre-installed:
 | GitHub CLI | PR creation, issue management, workflow dispatch |
 | GitHub Copilot + Chat | AI-powered coding assistant with Git-Ape agents |
 | Python 3.12 | Scripting and IaC scanning (Checkov) |
-| Node.js 20 | Tooling and automation scripts |
+| Node.js 24 | Tooling, automation scripts, and Docusaurus docs |
 | PowerShell | PSRule, ARM-TTK validation |
 | jq | JSON parsing |
 | Checkov | IaC security scanner |
