@@ -23,9 +23,9 @@ Full toolchain for agent authoring, ARM template work, IaC scanning, Azure deplo
 
 - **Base image**: `python:3-3.12-bookworm`
 - **Features**: Azure CLI, GitHub CLI, Copilot CLI, PowerShell, Node.js 24, common-utils (Zsh + Oh My Zsh)
-- **Post-create**: installs Checkov, ARM-TTK, PSRule for Azure, the [waza](https://github.com/microsoft/waza) skill-eval CLI, and the website npm dependencies — in parallel
+- **Post-create**: installs Checkov, ARM-TTK, PSRule for Azure, the [waza](https://github.com/microsoft/waza) skill-eval CLI, the website npm dependencies, and in-container linters (ShellCheck, actionlint, markdownlint, yamllint, check-jsonschema, PSScriptAnalyzer) — in parallel
 - **Forwarded port**: 3333 (Docusaurus dev/serve)
-- **Extensions**: GitHub Copilot, Copilot Chat, Azure Resource Groups, Azure Functions, Azure MCP Server, PSRule, [Chat Customizations Evaluations](https://github.com/microsoft/vscode-chat-customizations-evaluation), Mermaid Preview, MDX, ESLint
+- **Extensions**: GitHub Copilot, Copilot Chat, Azure Resource Groups, Azure Functions, Azure MCP Server, PSRule, [Chat Customizations Evaluations](https://github.com/microsoft/vscode-chat-customizations-evaluation), Mermaid Preview, MDX, ESLint, markdownlint, ShellCheck, YAML, GitHub Actions, PowerShell
 - **Settings**: Azure MCP server preconfigured (`namespace` mode, read/write enabled); `chatCustomizationsEvaluations.waza.command` set to `waza`
 - **Remote user**: `vscode`
 
