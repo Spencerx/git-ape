@@ -13,7 +13,7 @@ Git-Ape ships a single [dev container](https://containers.dev/) configuration th
 
 | Configuration | Use it when you want to… | Image |
 |---------------|--------------------------|-------|
-| **Agent Engineering** (`.devcontainer/agent-engineering/`) | Author agents, skills, prompts, ARM templates, run IaC scans, deploy to Azure, and edit/build the docs site | `mcr.microsoft.com/devcontainers/python:3-3.12-bookworm` |
+| **Agent Engineering** (`.devcontainer/`) | Author agents, skills, prompts, ARM templates, run IaC scans, deploy to Azure, and edit/build the docs site | `mcr.microsoft.com/devcontainers/python:3-3.12-bookworm` |
 
 The config is detected automatically by Codespaces and the VS Code Dev Containers extension.
 
@@ -68,8 +68,8 @@ Once the environment is ready:
 
 ## Customization
 
-- **Dev container features**: Add entries to the `features` object in `.devcontainer/agent-engineering/devcontainer.json`.
-- **Post-create tools**: Add installation commands to `.devcontainer/agent-engineering/post-create.sh`.
+- **Dev container features**: Add entries to the `features` object in `.devcontainer/devcontainer.json`.
+- **Post-create tools**: Add installation commands to `.devcontainer/post-create.sh`.
 - **VS Code extensions**: Add extension IDs to `customizations.vscode.extensions` in the same `devcontainer.json`.
 
 ## Troubleshooting

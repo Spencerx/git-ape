@@ -18,7 +18,7 @@
     }
   },
 
-  "onCreateCommand": "bash .devcontainer/agent-engineering/post-create.sh",
+  "onCreateCommand": "bash .devcontainer/post-create.sh",
 
   "containerEnv": {
     "WAZA_NO_UPDATE_CHECK": "1"

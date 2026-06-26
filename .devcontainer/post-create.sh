@@ -16,7 +16,7 @@ fi
 # Replace the default Codespaces "Welcome to Codespaces!" banner with a Git-Ape
 # one. The common-utils feature prints this file (which takes precedence over the
 # Codespaces default) on the first interactive terminal of each session.
-notice_src=".devcontainer/agent-engineering/first-run-notice.txt"
+notice_src=".devcontainer/first-run-notice.txt"
 if [ -f "$notice_src" ]; then
   echo "==> Installing Git-Ape first-run notice..."
   sudo mkdir -p /usr/local/etc/vscode-dev-containers
