@@ -103,6 +103,7 @@ const sidebars: SidebarsConfig = {
         'reference/plugin-json',
         'reference/marketplace',
         'reference/arm-templates',
+        'reference/ard',
       ],
     },
     'changelog',
