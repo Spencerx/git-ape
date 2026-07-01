@@ -110,5 +110,6 @@
       "url": "https://github.com/Azure/git-ape/blob/main/.github/skills/prereq-check/SKILL.md",
       "description": "Validate Git-Ape CLI tool installation (az, gh, jq, git), versions, and auth sessions. Shows platform-specific install commands for anything missing. Use before first-time onboarding or when a command-not-found error occurs."
     }
-  ]
+  ],
+  "collections": []
 }
