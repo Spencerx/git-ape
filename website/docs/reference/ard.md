@@ -18,12 +18,11 @@ Git-Ape's catalog is published at:
 https://azure.github.io/git-ape/.well-known/ai-catalog.json
 ```
 
-The catalog lists all 15 Git-Ape skills and federates two additional skill catalogs via `collections`:
+The catalog lists all 15 Git-Ape skills.
 
-| Collection | URL | Skills |
-|---|---|---|
-| Azure SaaS Skills | `https://dawright22.github.io/azure-saas-skills/.well-known/ai-catalog.json` | 12 |
-| AWS Skills | `https://dawright22.github.io/aws_skills/.well-known/ai-catalog.json` | 21 |
+:::note
+Git-Ape's docs are a GitHub Pages **project** site, so the catalog is served under the `/git-ape/` path prefix (as shown above) rather than at the `azure.github.io` domain root. Register the full URL above with your ARD-enabled agent or discovery service.
+:::
 
 ## Git-Ape Skills in the Catalog
 
@@ -54,16 +53,13 @@ The catalog follows the [ARD `ai-catalog.json` spec v1.0](https://agenticresourc
   "specVersion": "1.0",
   "host": { "displayName": "Azure Git-Ape", "identifier": "azure.github.io" },
   "entries": [ ... ],
-  "collections": [
-    { "url": "https://dawright22.github.io/azure-saas-skills/.well-known/ai-catalog.json" },
-    { "url": "https://dawright22.github.io/aws_skills/.well-known/ai-catalog.json" }
-  ]
+  "collections": []
 }
 ```
 
-Each `entries[]` item includes `identifier`, `displayName`, `type: "application/ai-skill"`, `url` (SKILL.md), and `description` sourced directly from the skill's SKILL.md frontmatter.
+Each `entries[]` item includes `identifier`, `displayName`, `type: "application/ai-skill"`, `url` (the skill's `SKILL.md`), and a `description` derived from the skill's `SKILL.md` frontmatter (condensed for length).
 
-The `collections[]` array is the federation mechanism — an ARD crawler follows these URLs to discover the SaaS and AWS skill catalogs without duplicating their entries inline.
+The `collections[]` array is ARD's federation mechanism — it links sub-catalogs by URL so a crawler can resolve them without inlining their entries. Git-Ape's catalog currently federates no external collections, so it ships as `"collections": []`.
 
 ## Adding Git-Ape to an ARD-Enabled Agent
 
@@ -73,4 +69,4 @@ If your AI agent or tool supports ARD discovery, register the catalog URL:
 https://azure.github.io/git-ape/.well-known/ai-catalog.json
 ```
 
-The agent will discover all 48 skills (15 Git-Ape + 12 SaaS + 21 AWS) and their descriptions, and can invoke them via the GitHub Copilot skill invocation protocol.
+The agent will discover all 15 Git-Ape skills and their descriptions, and can invoke them via the GitHub Copilot skill invocation protocol.
