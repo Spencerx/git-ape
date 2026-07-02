@@ -47,6 +47,9 @@ jobs:
         working-directory: website
         run: npm run build
 
+      - name: Copy hidden static dirs (Docusaurus skips dotfiles)
+        run: cp -r website/static/.well-known website/build/.well-known
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
